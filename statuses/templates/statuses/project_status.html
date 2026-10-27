@@ -1,0 +1,245 @@
+{% extends 'base.html' %}
+{% block title %}Statut — {{ project.name }}{% endblock %}
+{% block page_title %}Statut du projet{% endblock %}
+{% block content %}
+<div class="row">
+    <div class="col-12">
+
+        <div class="card mb-4 project-header-card">
+            <div class="card-body py-4">
+                <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+                    <div>
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            <span class="rag-badge rag-badge-{{ project.global_rag_status|lower }}">
+                                {% if project.global_rag_status == 'RED' %}Rouge
+                                {% elif project.global_rag_status == 'ORANGE' %}Orange
+                                {% elif project.global_rag_status == 'GREEN' %}Vert
+                                {% else %}Non défini{% endif %}
+                            </span>
+                            <span class="status-subtitle">Statut global du projet</span>
+                        </div>
+                        <h1 class="project-title mb-0">{{ project.name }}</h1>
+                    </div>
+                    <a href="{% url 'projects:project_detail' project.pk %}" class="btn btn-outline-secondary">
+                        <i class="ti ti-arrow-left me-1"></i> Retour au projet
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <form method="POST" novalidate>
+            {% csrf_token %}
+            {{ formset.management_form }}
+
+            <div class="card">
+                <div class="table-responsive">
+                    <table class="table table-vcenter card-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 140px;">Département</th>
+                                <th style="width: 220px;">Statut</th>
+                                <th style="width: 220px;">Responsable</th>
+                                <th>Commentaire</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for form, dept_status in forms_with_dept %}
+                            <tr>
+                                <td class="fw-medium">{{ dept_status.get_department_display }}</td>
+                                <td>
+                                    <div class="rag-badge-group">
+                                        {% for value, label in form.fields.status.choices %}
+                                            <input type="radio"
+                                                   name="{{ form.status.html_name }}"
+                                                   id="id_{{ form.prefix }}-status_{{ forloop.counter0 }}"
+                                                   value="{{ value }}"
+                                                   class="rag-badge-input"
+                                                   {% if form.status.value == value %}checked{% endif %}>
+                                            <label for="id_{{ form.prefix }}-status_{{ forloop.counter0 }}"
+                                                   class="rag-badge-option rag-badge-option-{{ value|lower }}"
+                                                   title="{{ label }}">
+                                            </label>
+                                        {% endfor %}
+                                    </div>
+                                    {{ form.id }}
+                                    {% if form.status.errors %}
+                                        <div class="text-danger small mt-1">{{ form.status.errors }}</div>
+                                    {% endif %}
+                                </td>
+                                <td>{{ form.responsible }}</td>
+                                <td>{{ form.comment }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-end mt-3 mb-4">
+                <button type="submit" class="btn btn-primary px-4">
+                    <i class="ti ti-check me-1"></i> Enregistrer les statuts
+                </button>
+            </div>
+        </form>
+
+        <div class="status-history-card mt-4">
+            <h5 class="mb-3">Historique des modifications</h5>
+
+            {% if history %}
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead>
+                            <tr>
+                                <th>Département</th>
+                                <th>Statut</th>
+                                <th>Modifié par</th>
+                                <th>Date de soumission</th>
+                                <th>Commentaire</th>
+                                <th>Validation</th>
+                                <th class="text-end">Rapport</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for entry in history %}
+                                <tr>
+                                    <td>{{ entry.department_status.get_department_display }}</td>
+                                    <td>
+                                        <span class="rag-badge rag-badge-{{ entry.status|lower }}">
+                                            {{ entry.get_status_display }}
+                                        </span>
+                                    </td>
+                                    <td>{{ entry.changed_by.get_full_name|default:entry.changed_by.username|default:"—" }}</td>
+                                    <td>{{ entry.changed_at|date:"d/m/Y H:i" }}</td>
+                                    <td>{{ entry.comment|default:"—" }}</td>
+                                    <td>
+                                        {% if not entry.is_released %}
+                                            <span class="badge-draft">Brouillon</span>
+                                            {% if request.user == project.manager or request.user.role == 'ADMIN' %}
+                                            <form method="post" action="{% url 'statuses:release_report' entry.pk %}" class="d-inline">
+                                                {% csrf_token %}
+                                                <button type="submit" class="btn btn-sm btn-success"
+                                                        onclick="return confirm('Valider définitivement ce rapport ? Il ne sera plus modifiable.');">
+                                                    Valider
+                                                </button>
+                                            </form>
+                                            {% endif %}
+                                        {% else %}
+                                            <span class="badge-released">Validé le {{ entry.released_at|date:"d/m/Y H:i" }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-end">
+                                        <a href="{% url 'statuses:history_entry_pdf' entry.pk %}"
+                                           class="btn btn-icon btn-sm btn-outline-modern"
+                                           title="Télécharger ce snapshot en PDF"
+                                           data-bs-toggle="tooltip">
+                                            <i class="ti ti-file-type-pdf"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p class="status-empty">Aucun historique disponible.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+    .project-header-card {
+        border: 1px solid var(--card-border);
+        border-radius: 16px;
+        background: linear-gradient(135deg, var(--bg-body) 0%, var(--alert-bg) 100%);
+        box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+    }
+    [data-bs-theme="dark"] .project-header-card { box-shadow: none; }
+    .project-title { font-size: 1.5rem; font-weight: 700; color: var(--ink); }
+    .status-subtitle { color: var(--muted); font-size: 0.85rem; }
+
+    .rag-badge {
+        display: inline-flex; align-items: center;
+        padding: 0.35rem 1rem; border-radius: 50px;
+        font-size: 0.75rem; font-weight: 700;
+        text-transform: uppercase; letter-spacing: 0.4px; color: #fff;
+    }
+    .rag-badge-red    { background: #e03131; }
+    .rag-badge-orange { background: #f08c00; }
+    .rag-badge-green  { background: #2f9e44; }
+    .rag-badge-none   { background: #868e96; }
+
+    .rag-badge-group { display: flex; gap: 0.5rem; }
+    .rag-badge-input { position: absolute; opacity: 0; width: 0; height: 0; }
+    .rag-badge-option {
+        width: 28px; height: 28px; border-radius: 50%;
+        cursor: pointer; display: inline-block;
+        border: 3px solid var(--card-border); opacity: 0.35;
+        transition: all 0.15s ease;
+    }
+    .rag-badge-option:hover { opacity: 0.7; }
+    .rag-badge-option-red    { background: #e03131; }
+    .rag-badge-option-orange { background: #f08c00; }
+    .rag-badge-option-green  { background: #2f9e44; }
+    .rag-badge-input:checked + .rag-badge-option {
+        opacity: 1; border-color: var(--ink); transform: scale(1.1);
+    }
+
+    .card-table select,
+    .card-table textarea {
+        border-radius: 8px; border: 1px solid var(--card-border);
+        background: var(--bg-surface); color: var(--ink);
+        padding: 0.4rem 0.65rem; width: 100%; font-size: 0.85rem;
+    }
+    .card-table textarea { resize: vertical; min-height: 45px; }
+    .card-table select:focus,
+    .card-table textarea:focus {
+        outline: none; border-color: var(--brand);
+        box-shadow: 0 0 0 3px var(--brand-glow);
+    }
+
+    .status-history-card {
+        background: var(--bg-surface);
+        border: 1px solid var(--card-border);
+        border-radius: 16px;
+        padding: 1.25rem 1.5rem;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+        color: var(--ink);
+    }
+    [data-bs-theme="dark"] .status-history-card { box-shadow: none; }
+    .status-empty { color: var(--muted); margin: 0; }
+
+    .btn-icon {
+        width: 38px;
+        height: 38px;
+        padding: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+    }
+    .btn-icon i {
+        font-size: 1.1rem;
+    }
+    .btn-icon.btn-sm {
+        width: 32px;
+        height: 32px;
+    }
+    .btn-icon.btn-sm i {
+        font-size: 0.95rem;
+    }
+
+    .badge-draft {
+        background: rgba(134, 142, 150, 0.15); color: #868e96;
+        font-size: 0.72rem; font-weight: 700; text-transform: uppercase;
+        padding: 0.25rem 0.6rem; border-radius: 50px; margin-right: 0.4rem;
+        display: inline-block;
+    }
+    .badge-released {
+        background: rgba(47, 158, 68, 0.15); color: #2f9e44;
+        font-size: 0.72rem; font-weight: 700;
+        padding: 0.25rem 0.6rem; border-radius: 50px;
+        display: inline-block;
+    }
+</style>
+{% endblock %}

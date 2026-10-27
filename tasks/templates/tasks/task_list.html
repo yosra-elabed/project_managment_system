@@ -1,0 +1,284 @@
+{% extends 'base.html' %}
+{% block title %}Tâches — PMS{% endblock %}
+{% block page_title %}Tâches (Open Items){% endblock %}
+
+{% block content %}
+<div class="tl-wrapper">
+
+    <!-- ===== HERO HEADER ===== -->
+    <div class="tl-hero">
+        <div class="tl-hero-orb"></div>
+        <div class="tl-hero-top">
+            <div>
+                <p class="tl-hero-subtitle">Suivi des Open Items</p>
+                <h1 class="tl-hero-title">Liste des tâches</h1>
+            </div>
+            <a href="{% url 'tasks:task_create' %}" class="btn-pd btn-pd-primary">
+                <i class="ti ti-plus"></i> Nouvelle tâche
+            </a>
+        </div>
+    </div>
+
+    <!-- ===== STATS STRIP ===== -->
+    <div class="tl-stats-strip">
+        <div class="tl-stat">
+            <span class="tl-stat-icon tl-stat-icon-slate"><i class="ti ti-list-check"></i></span>
+            <div>
+                <div class="tl-stat-value">{{ tasks|length }}</div>
+                <div class="tl-stat-label">Tâches au total</div>
+            </div>
+        </div>
+        <div class="tl-stat">
+            <span class="tl-stat-icon tl-stat-icon-blue"><i class="ti ti-progress"></i></span>
+            <div>
+                <div class="tl-stat-value">{{ in_progress_count|default:"0" }}</div>
+                <div class="tl-stat-label">En cours</div>
+            </div>
+        </div>
+        <div class="tl-stat">
+            <span class="tl-stat-icon tl-stat-icon-green"><i class="ti ti-circle-check"></i></span>
+            <div>
+                <div class="tl-stat-value">{{ done_count|default:"0" }}</div>
+                <div class="tl-stat-label">Terminées</div>
+            </div>
+        </div>
+        <div class="tl-stat">
+            <span class="tl-stat-icon tl-stat-icon-orange"><i class="ti ti-alert-triangle"></i></span>
+            <div>
+                <div class="tl-stat-value">{{ overdue_count|default:"0" }}</div>
+                <div class="tl-stat-label">En retard</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== TABLE ===== -->
+    <div class="tl-card">
+        <div class="tl-table-wrap">
+            <table class="tl-table">
+                <thead>
+                    <tr>
+                        <th>Tâche</th>
+                        <th>Projet</th>
+                        <th>Responsable</th>
+                        <th>Statut</th>
+                        <th>Échéance</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for task in tasks %}
+                    <tr>
+                        <td>
+                            <a href="{% url 'tasks:task_detail' task.pk %}" class="tl-task-link">
+                                {{ task.title }}
+                            </a>
+                        </td>
+                        <td class="tl-muted">{{ task.project.name }}</td>
+                        <td>
+                            <div class="tl-assignee">
+                                <span class="tl-avatar">{{ task.assigned_to.username|slice:":1"|upper }}</span>
+                                {{ task.assigned_to.get_full_name|default:task.assigned_to.username }}
+                            </div>
+                        </td>
+                        <td>
+                            <span class="status-badge status-badge-{{ task.status|lower }}">
+                                {{ task.get_status_display }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if task.due_date %}
+                                {{ task.due_date|date:"d/m/Y" }}
+                            {% else %}
+                                <span class="tl-muted">—</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end">
+                            <div class="tl-actions">
+                                <a href="{% url 'tasks:task_edit' task.pk %}" class="tl-btn-icon tl-btn-icon-primary" title="Modifier">
+                                    <i class="ti ti-pencil"></i>
+                                </a>
+                                <a href="{% url 'tasks:task_delete' task.pk %}" class="tl-btn-icon tl-btn-icon-danger" title="Supprimer">
+                                    <i class="ti ti-trash"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="tl-empty-row">
+                            <i class="ti ti-checklist"></i>
+                            <p class="mb-0">Aucune tâche pour le moment.</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<style>
+    .tl-wrapper { max-width: 1400px; margin: 0 auto; }
+
+    /* ===== HERO ===== */
+    .tl-hero {
+        position: relative;
+        border-radius: 20px;
+        padding: 2rem 2.25rem;
+        margin-bottom: 1.5rem;
+        background: linear-gradient(135deg, #12182b 0%, #1c2540 55%, #101627 100%);
+        color: #fff;
+        overflow: hidden;
+        box-shadow: 0 12px 32px rgba(15, 23, 42, 0.18);
+    }
+    .tl-hero-orb {
+        position: absolute;
+        top: -120px; right: -80px;
+        width: 320px; height: 320px;
+        border-radius: 50%;
+        background: radial-gradient(circle, #4692ec, transparent 70%);
+        filter: blur(50px);
+        opacity: 0.45;
+        pointer-events: none;
+    }
+    .tl-hero-top {
+        position: relative; z-index: 1;
+        display: flex; justify-content: space-between; align-items: center;
+        flex-wrap: wrap; gap: 1.25rem;
+    }
+    .tl-hero-subtitle { color: #aab2c8; font-size: 0.88rem; margin-bottom: 0.3rem; }
+    .tl-hero-title { font-size: 1.9rem; font-weight: 800; letter-spacing: -0.7px; margin: 0; color: #fff; }
+
+    .btn-pd {
+        display: inline-flex; align-items: center; gap: 0.4rem;
+        padding: 0.6rem 1.1rem; border-radius: 10px;
+        font-size: 0.85rem; font-weight: 600; text-decoration: none;
+        transition: all 0.18s ease; border: none; cursor: pointer;
+    }
+    .btn-pd-primary { background: #4692ec; color: #fff; }
+    .btn-pd-primary:hover { background: #2f7be0; color: #fff; transform: translateY(-1px); }
+
+    /* ===== STATS ===== */
+    .tl-stats-strip {
+        display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    .tl-stat {
+        background: var(--bg-surface);
+        border-radius: 14px; padding: 1rem 1.1rem;
+        display: flex; align-items: center; gap: 0.85rem;
+        box-shadow: 0 1px 6px rgba(0,0,0,0.05);
+        transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+    }
+    .tl-stat:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0,0,0,0.08); }
+    .tl-stat-icon {
+        width: 42px; height: 42px; min-width: 42px; border-radius: 12px;
+        display: flex; align-items: center; justify-content: center; font-size: 1.15rem;
+    }
+    .tl-stat-icon-slate  { background: #eef1f5; color: #495057; }
+    .tl-stat-icon-blue   { background: #e7f5ff; color: #1971c2; }
+    .tl-stat-icon-green  { background: #ebfbee; color: #2f9e44; }
+    .tl-stat-icon-orange { background: #fff4e6; color: #e8590c; }
+    [data-bs-theme="dark"] .tl-stat-icon-slate  { background: rgba(148,158,190,0.15); color: #b9c3dc; }
+    [data-bs-theme="dark"] .tl-stat-icon-blue   { background: rgba(25,113,194,0.18); color: #74b3f0; }
+    [data-bs-theme="dark"] .tl-stat-icon-green  { background: rgba(47,158,68,0.18); color: #79d190; }
+    [data-bs-theme="dark"] .tl-stat-icon-orange { background: rgba(232,89,12,0.18); color: #f5a35e; }
+
+    .tl-stat-value { font-size: 1.25rem; font-weight: 800; color: var(--ink); line-height: 1.2; }
+    .tl-stat-label { font-size: 0.72rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.3px; font-weight: 600; }
+
+    /* ===== TABLE CARD ===== */
+    .tl-card {
+        background: var(--bg-surface);
+        border-radius: 16px;
+        box-shadow: 0 1px 6px rgba(0,0,0,0.05);
+        overflow: hidden;
+        transition: background-color 0.2s ease;
+    }
+    .tl-table-wrap { overflow-x: auto; }
+    .tl-table { width: 100%; border-collapse: collapse; }
+
+    .tl-table thead th {
+        text-align: left;
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+        color: var(--muted);
+        padding: 1rem 1.25rem;
+        border-bottom: 1px solid var(--border);
+        white-space: nowrap;
+    }
+    .tl-table tbody td {
+        padding: 0.9rem 1.25rem;
+        border-bottom: 1px solid var(--border);
+        font-size: 0.88rem;
+        color: var(--ink);
+        vertical-align: middle;
+    }
+    .tl-table tbody tr:last-child td { border-bottom: none; }
+    .tl-table tbody tr {
+        transition: background-color 0.15s ease;
+    }
+    .tl-table tbody tr:hover { background: var(--bg-body); }
+
+    .tl-task-link {
+        font-weight: 600;
+        color: var(--ink);
+        text-decoration: none;
+    }
+    .tl-task-link:hover { color: #4692ec; }
+    .tl-muted { color: var(--muted); }
+
+    .tl-assignee { display: flex; align-items: center; gap: 0.55rem; }
+    .tl-avatar {
+        width: 26px; height: 26px; min-width: 26px; border-radius: 50%;
+        background: #e7f5ff; color: #1971c2;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 0.72rem; font-weight: 700;
+    }
+    [data-bs-theme="dark"] .tl-avatar { background: rgba(25,113,194,0.2); color: #74b3f0; }
+
+    .status-badge {
+        display: inline-flex; align-items: center;
+        padding: 0.3rem 0.85rem; border-radius: 50px;
+        font-size: 0.7rem; font-weight: 700;
+        text-transform: uppercase; letter-spacing: 0.3px;
+        white-space: nowrap;
+    }
+    .status-badge-todo         { background: #e7e9ee; color: #495057; }
+    .status-badge-in_progress  { background: #d0ebff; color: #1864ab; }
+    .status-badge-done         { background: #d3f9d8; color: #2b8a3e; }
+    .status-badge-extra        { background: #fff3bf; color: #997404; }
+    [data-bs-theme="dark"] .status-badge-todo        { background: rgba(148,158,190,0.18); color: #c3cadb; }
+    [data-bs-theme="dark"] .status-badge-in_progress { background: rgba(25,113,194,0.22); color: #82c1f5; }
+    [data-bs-theme="dark"] .status-badge-done        { background: rgba(47,158,68,0.22); color: #84dd9a; }
+    [data-bs-theme="dark"] .status-badge-extra       { background: rgba(153,116,4,0.25); color: #f0cd63; }
+
+    .tl-actions { display: flex; justify-content: flex-end; gap: 0.4rem; }
+    .tl-btn-icon {
+        width: 32px; height: 32px; border-radius: 8px;
+        display: inline-flex; align-items: center; justify-content: center;
+        font-size: 0.9rem; text-decoration: none;
+        border: 1.5px solid var(--border);
+        transition: all 0.15s ease;
+    }
+    .tl-btn-icon-primary { color: #4692ec; }
+    .tl-btn-icon-primary:hover { background: #4692ec; color: #fff; border-color: #4692ec; }
+    .tl-btn-icon-danger { color: #e03131; }
+    .tl-btn-icon-danger:hover { background: #e03131; color: #fff; border-color: #e03131; }
+
+    .tl-empty-row { text-align: center; padding: 3rem 1rem !important; }
+    .tl-empty-row i { font-size: 2.5rem; color: var(--border); display: block; margin-bottom: 0.75rem; }
+    .tl-empty-row p { color: var(--muted); }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 992px) {
+        .tl-stats-strip { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 576px) {
+        .tl-stats-strip { grid-template-columns: 1fr; }
+        .tl-hero-title { font-size: 1.5rem; }
+    }
+</style>
+{% endblock %}

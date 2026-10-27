@@ -1,0 +1,273 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Créer un compte — Project Management System</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@latest/dist/css/tabler.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        * { font-family: 'Inter', -apple-system, sans-serif; }
+
+        body {
+            background: radial-gradient(circle at 20% 20%, #163264 0%, #0B2145 55%, #081733 100%);
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+            padding: 2rem 0;
+        }
+        body::before {
+            content: '';
+            position: absolute;
+            top: -120px; right: -120px;
+            width: 380px; height: 380px;
+            background: radial-gradient(circle, rgba(77,139,255,0.18) 0%, transparent 70%);
+            filter: blur(20px);
+            pointer-events: none;
+        }
+
+        .auth-wrapper {
+            display: flex;
+            border-radius: 16px;
+            overflow: hidden;
+            max-width: 880px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.35);
+            animation: fadeUp 0.5s ease;
+        }
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(18px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ===== BRAND PANEL ANIMÉ ===== */
+        .brand-panel {
+            background: linear-gradient(-45deg, #0B2145, #163264, #0d1b3d, #1a3a6e);
+            background-size: 400% 400%;
+            animation: gradientFlow 12s ease infinite;
+            color: #fff;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 3rem 2.2rem;
+            position: relative;
+            overflow: hidden;
+        }
+        @keyframes gradientFlow {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .brand-panel .floating-shape {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.05);
+            pointer-events: none;
+        }
+        .brand-panel .shape-1 {
+            width: 220px; height: 220px;
+            top: -60px; left: -60px;
+            animation: floatSlow 8s ease-in-out infinite;
+        }
+        .brand-panel .shape-2 {
+            width: 140px; height: 140px;
+            bottom: -40px; right: -30px;
+            background: rgba(77,139,255,0.08);
+            animation: floatSlow 10s ease-in-out infinite reverse;
+        }
+        .brand-panel .shape-3 {
+            width: 90px; height: 90px;
+            top: 40%; right: 10%;
+            background: rgba(255,255,255,0.04);
+            animation: floatSlow 6s ease-in-out infinite;
+        }
+        @keyframes floatSlow {
+            0%, 100% { transform: translateY(0) translateX(0); }
+            50% { transform: translateY(-18px) translateX(10px); }
+        }
+
+        .brand-logo-text {
+            position: relative;
+            z-index: 1;
+            font-size: 2.6rem;
+            font-weight: 800;
+            letter-spacing: 0.06em;
+            color: #fff;
+            margin-bottom: 0.4rem;
+            text-shadow: 0 0 24px rgba(255,255,255,0.2);
+        }
+        .brand-logo-text .accent-dot { color: #4d8bff; }
+        .brand-panel h4 { position: relative; z-index: 1; font-weight: 700; }
+        .brand-panel p.subtitle { position: relative; z-index: 1; color: #9fb0d1; font-size: 0.88rem; text-align: center; line-height: 1.5; }
+        .brand-features { position: relative; z-index: 1; margin-top: 1.75rem; width: 100%; }
+        .brand-features .feature-item {
+            display: flex; align-items: center; gap: 0.6rem;
+            font-size: 0.82rem; color: #c7d2e8; margin-bottom: 0.6rem;
+        }
+        .brand-features .feature-item i { color: #4d8bff; font-size: 1rem; }
+
+        /* ===== FORM PANEL ===== */
+        .form-panel {
+            background-color: #fff;
+            flex: 1;
+            padding: 3rem 2.6rem;
+            max-height: 92vh;
+            overflow-y: auto;
+        }
+        .form-panel h5 { font-weight: 700; color: #10182B; }
+        .form-panel::-webkit-scrollbar { width: 5px; }
+        .form-panel::-webkit-scrollbar-thumb { background: #e1e5ec; border-radius: 4px; }
+
+        .form-panel .form-control,
+        .form-panel .form-select {
+            border-radius: 8px;
+            border: 1px solid #e1e5ec;
+            transition: border-color 0.15s ease, box-shadow 0.15s ease;
+        }
+        .form-panel .form-control:focus,
+        .form-panel .form-select:focus {
+            border-color: #0B2145;
+            box-shadow: 0 0 0 3px rgba(11,33,69,0.08);
+        }
+
+        .field-with-icon { position: relative; }
+        .field-with-icon i.field-icon {
+            position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #99a3b8; z-index: 2;
+        }
+        .field-with-icon .form-control,
+        .field-with-icon .form-select { padding-left: 36px; }
+
+        .btn-primary-custom {
+            background-color: #0B2145;
+            border: none;
+            border-radius: 8px;
+            transition: background-color 0.15s ease, transform 0.1s ease;
+        }
+        .btn-primary-custom:hover { background-color: #163264; transform: translateY(-1px); }
+
+        .password-hint {
+            font-size: 0.74rem;
+            color: #99a3b8;
+            margin-top: 0.3rem;
+        }
+
+        @media (max-width: 767px) {
+            .auth-wrapper { flex-direction: column; margin: 1rem; }
+            .brand-features { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid d-flex justify-content-center align-items-center" style="min-height: 100%;">
+        <div class="auth-wrapper">
+
+            <div class="brand-panel">
+                <div class="floating-shape shape-1"></div>
+                <div class="floating-shape shape-2"></div>
+                <div class="floating-shape shape-3"></div>
+
+                <div class="brand-logo-text">LEONI<span class="accent-dot">.</span></div>
+                <h4 class="text-center">Project Management System</h4>
+                <p class="subtitle mt-2">Rejoignez la plateforme et commencez à collaborer avec votre équipe.</p>
+
+                <div class="brand-features">
+                    <div class="feature-item"><i class="ti ti-circle-check"></i> Création de compte en 30 secondes</div>
+                    <div class="feature-item"><i class="ti ti-circle-check"></i> Accès immédiat à vos projets</div>
+                    <div class="feature-item"><i class="ti ti-circle-check"></i> Données sécurisées et privées</div>
+                </div>
+            </div>
+
+            <div class="form-panel">
+                <h5 class="mb-1">Créer un compte</h5>
+                <p class="text-muted small mb-4">Remplissez le formulaire pour vous inscrire</p>
+
+                {% if form.errors %}
+                    <div class="alert alert-danger py-2 small d-flex align-items-center gap-2" role="alert">
+                        <i class="ti ti-alert-circle"></i>
+                        Veuillez corriger les erreurs ci-dessous.
+                    </div>
+                {% endif %}
+
+                <form method="POST" novalidate>
+                    {% csrf_token %}
+
+                    <div class="mb-3">
+                        <label for="{{ form.username.id_for_label }}" class="form-label small fw-semibold">Nom d'utilisateur</label>
+                        <div class="field-with-icon">
+                            <i class="ti ti-user field-icon"></i>
+                            {{ form.username }}
+                        </div>
+                        {% for error in form.username.errors %}
+                            <div class="text-danger small mt-1">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form.email.id_for_label }}" class="form-label small fw-semibold">Email</label>
+                        <div class="field-with-icon">
+                            <i class="ti ti-mail field-icon"></i>
+                            {{ form.email }}
+                        </div>
+                        {% for error in form.email.errors %}
+                            <div class="text-danger small mt-1">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form.role.id_for_label }}" class="form-label small fw-semibold">Rôle</label>
+                        <div class="field-with-icon">
+                            <i class="ti ti-briefcase field-icon"></i>
+                            {{ form.role }}
+                        </div>
+                        {% for error in form.role.errors %}
+                            <div class="text-danger small mt-1">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form.password1.id_for_label }}" class="form-label small fw-semibold">Mot de passe</label>
+                        <div class="field-with-icon">
+                            <i class="ti ti-lock field-icon"></i>
+                            {{ form.password1 }}
+                        </div>
+                        <div class="password-hint">Au moins 8 caractères, évitez les mots de passe trop communs.</div>
+                        {% for error in form.password1.errors %}
+                            <div class="text-danger small mt-1">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form.password2.id_for_label }}" class="form-label small fw-semibold">Confirmer le mot de passe</label>
+                        <div class="field-with-icon">
+                            <i class="ti ti-lock-check field-icon"></i>
+                            {{ form.password2 }}
+                        </div>
+                        {% for error in form.password2.errors %}
+                            <div class="text-danger small mt-1">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+                    <button type="submit" class="btn btn-primary-custom w-100 text-white d-flex align-items-center justify-content-center gap-2 py-2 mt-1">
+                        Créer le compte <i class="ti ti-arrow-right"></i>
+                    </button>
+                </form>
+
+                <p class="text-center text-muted small mt-3 mb-0">
+                    Déjà un compte ? <a href="{% url 'accounts:login' %}" style="color: #0B2145; font-weight: 600;">Se connecter</a>
+                </p>
+
+            </div>
+
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@tabler/core@latest/dist/js/tabler.min.js"></script>
+</body>
+</html>

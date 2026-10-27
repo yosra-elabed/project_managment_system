@@ -1,0 +1,153 @@
+{% extends 'base.html' %}
+{% block title %}{{ title }} — PMS{% endblock %}
+{% block page_title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+
+        {% if form.errors %}
+            <div class="alert alert-danger d-flex align-items-center">
+                <i class="ti ti-alert-circle me-2 fs-3"></i>
+                <div>
+                    <strong>Merci de corriger les erreurs ci-dessous.</strong>
+                </div>
+            </div>
+        {% endif %}
+
+        <form method="POST" novalidate>
+            {% csrf_token %}
+
+            <div class="card mb-3">
+                <div class="card-header bg-blue-lt border-0">
+                    <h3 class="card-title mb-0">
+                        <i class="ti ti-user-edit me-2 text-blue"></i>
+                        {{ title }}
+                    </h3>
+                </div>
+                <div class="card-body">
+
+                    <!-- Identité -->
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">
+                                {{ form.username.label }}
+                                {% if form.username.field.required %}<span class="text-danger">*</span>{% endif %}
+                            </label>
+                            {{ form.username }}
+                            {% if form.username.errors %}
+                                <div class="field-error">
+                                    <i class="ti ti-x-circle me-1"></i>{{ form.username.errors|striptags }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">
+                                {{ form.email.label }}
+                                {% if form.email.field.required %}<span class="text-danger">*</span>{% endif %}
+                            </label>
+                            {{ form.email }}
+                            {% if form.email.errors %}
+                                <div class="field-error">
+                                    <i class="ti ti-x-circle me-1"></i>{{ form.email.errors|striptags }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Rôle -->
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">
+                                {{ form.role.label }}
+                                {% if form.role.field.required %}<span class="text-danger">*</span>{% endif %}
+                            </label>
+                            {{ form.role }}
+                            {% if form.role.errors %}
+                                <div class="field-error">
+                                    <i class="ti ti-x-circle me-1"></i>{{ form.role.errors|striptags }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <hr class="form-divider">
+
+                    <!-- Mot de passe -->
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">
+                                {{ form.password1.label }}
+                                {% if form.password1.field.required %}<span class="text-danger">*</span>{% endif %}
+                            </label>
+                            {{ form.password1 }}
+                            {% if form.password1.errors %}
+                                <div class="field-error">
+                                    <i class="ti ti-x-circle me-1"></i>{{ form.password1.errors|striptags }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">
+                                {{ form.password2.label }}
+                                {% if form.password2.field.required %}<span class="text-danger">*</span>{% endif %}
+                            </label>
+                            {{ form.password2 }}
+                            {% if form.password2.errors %}
+                                <div class="field-error">
+                                    <i class="ti ti-x-circle me-1"></i>{{ form.password2.errors|striptags }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <a href="{% url 'accounts:user_list' %}" class="btn btn-outline-secondary">
+                    <i class="ti ti-arrow-left me-1"></i> Annuler
+                </a>
+                <button type="submit" class="btn btn-primary px-4">
+                    <i class="ti ti-check me-1"></i>
+                    Enregistrer
+                </button>
+            </div>
+
+        </form>
+    </div>
+</div>
+
+<style>
+    .field-error {
+        display: flex;
+        align-items: center;
+        font-size: 0.8rem;
+        color: #e03131;
+        margin-top: 0.35rem;
+    }
+
+    .form-divider {
+        margin: 0.5rem 0 1.25rem;
+        border-color: #eef0f3;
+    }
+
+    .card-body input[type="text"],
+    .card-body input[type="email"],
+    .card-body input[type="password"],
+    .card-body select {
+        border-radius: 8px;
+        border: 1px solid #dfe3e8;
+        padding: 0.55rem 0.85rem;
+        width: 100%;
+        transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .card-body input:focus,
+    .card-body select:focus {
+        border-color: #4692ec;
+        box-shadow: 0 0 0 3px rgba(70, 146, 236, 0.12);
+        outline: none;
+    }
+</style>
+{% endblock %}

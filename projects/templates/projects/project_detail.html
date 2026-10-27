@@ -1,0 +1,511 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ project.name }} — PMS{% endblock %}
+{% block page_title %}{{ project.name }}{% endblock %}
+
+{% block content %}
+<div class="pd-wrapper">
+
+    <!-- ===== HERO HEADER ===== -->
+    <div class="pd-hero rag-glow-{{ project.global_rag_status|lower }}">
+        <div class="pd-hero-orb"></div>
+        <div class="pd-hero-top">
+            <div class="pd-hero-left">
+                <div class="pd-badges">
+                    <span class="rag-badge rag-badge-{{ project.global_rag_status|lower }}">
+                        <span class="rag-pulse"></span>
+                        {% if project.global_rag_status == 'RED' %}Rouge
+                        {% elif project.global_rag_status == 'ORANGE' %}Orange
+                        {% elif project.global_rag_status == 'GREEN' %}Vert
+                        {% else %}Non défini{% endif %}
+                    </span>
+                    <span class="status-pill status-pill-{{ project.status|lower }}">
+                        <i class="ti ti-circle-dot me-1"></i>{{ project.get_status_display }}
+                    </span>
+                    <span class="badge-outline"><i class="ti ti-tag me-1"></i>{{ project.get_project_class_display }}</span>
+                    <span class="badge-outline"><i class="ti ti-category me-1"></i>{{ project.get_project_type_display }}</span>
+                </div>
+
+                <h1 class="pd-title">{{ project.name }}</h1>
+
+                <div class="pd-account">
+                    <i class="ti ti-building"></i>
+                    <span>{{ project.get_account_name_display }}</span>
+                    {% if project.owner %}
+                        <span class="pd-account-sep">•</span>
+                        <i class="ti ti-user-star"></i>
+                        <span>{{ project.owner }}</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="pd-actions">
+                <a href="{% url 'statuses:project_status' project.pk %}" class="btn-pd btn-pd-outline">
+                    <i class="ti ti-activity"></i> Statut
+                </a>
+                <a href="{% url 'projects:project_edit' project.pk %}" class="btn-pd btn-pd-primary">
+                    <i class="ti ti-pencil"></i> Modifier
+                </a>
+                <a href="{% url 'projects:project_list' %}" class="btn-pd btn-pd-ghost">
+                    <i class="ti ti-arrow-left"></i>
+                </a>
+            </div>
+        </div>
+
+        {% if project.active_delegation %}
+        <div class="pd-delegation-banner">
+            <div class="pd-delegation-info">
+                <span class="pd-delegation-icon"><i class="ti ti-repeat"></i></span>
+                <div>
+                    <div class="pd-delegation-title">
+                        Géré temporairement par <strong>{{ project.active_delegation.deputy.username }}</strong>
+                    </div>
+                    <div class="pd-delegation-meta">
+                        {% if project.active_delegation.reason %}{{ project.active_delegation.reason }}{% endif %}
+                        {% if project.active_delegation.end_date %}
+                            · jusqu'au {{ project.active_delegation.end_date|date:"d/m/Y" }}
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% if request.user == project.active_delegation.delegator or request.user.role == 'ADMIN' %}
+            <form method="post" action="{% url 'projects:delegation_end' project.active_delegation.pk %}" class="mb-0">
+                {% csrf_token %}
+                <button type="submit" class="btn-pd btn-pd-outline-light">Mettre fin</button>
+            </form>
+            {% endif %}
+        </div>
+        {% elif request.user == project.manager or request.user.role == 'ADMIN' %}
+        <div class="pd-delegate-cta">
+            <a href="{% url 'projects:delegation_create' project.pk %}">
+                <i class="ti ti-user-share"></i> Déléguer ce projet
+            </a>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- ===== QUICK STATS STRIP ===== -->
+    <div class="pd-stats-strip">
+        <div class="pd-stat">
+            <span class="pd-stat-icon pd-stat-icon-blue"><i class="ti ti-users-group"></i></span>
+            <div>
+                <div class="pd-stat-value">{{ project.contributor_count }}</div>
+                <div class="pd-stat-label">Contributeur{{ project.contributor_count|pluralize }}</div>
+            </div>
+        </div>
+        <div class="pd-stat">
+            <span class="pd-stat-icon pd-stat-icon-green"><i class="ti ti-calendar-event"></i></span>
+            <div>
+                <div class="pd-stat-value">{{ project.duration_display|default:"—" }}</div>
+                <div class="pd-stat-label">Durée totale</div>
+            </div>
+        </div>
+        <div class="pd-stat">
+            <span class="pd-stat-icon pd-stat-icon-orange"><i class="ti ti-clock-plus"></i></span>
+            <div>
+                <div class="pd-stat-value">{{ project.created_at|date:"d M Y" }}</div>
+                <div class="pd-stat-label">Créé le</div>
+            </div>
+        </div>
+        <div class="pd-stat">
+            <span class="pd-stat-icon pd-stat-icon-purple"><i class="ti ti-refresh"></i></span>
+            <div>
+                <div class="pd-stat-value">{{ project.updated_at|date:"d M Y" }}</div>
+                <div class="pd-stat-label">Mis à jour</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="pd-grid">
+        <!-- Colonne principale -->
+        <div class="pd-main">
+
+            <!-- Description -->
+            <div class="pd-card">
+                <div class="pd-card-heading">
+                    <span class="icon-circle icon-circle-purple"><i class="ti ti-align-left"></i></span>
+                    <h3>Description</h3>
+                </div>
+                {% if project.description %}
+                    <p class="pd-text">{{ project.description }}</p>
+                {% else %}
+                    <p class="pd-text-empty">Aucune description renseignée.</p>
+                {% endif %}
+            </div>
+
+            <!-- Objectifs -->
+            <div class="pd-card">
+                <div class="pd-card-heading">
+                    <span class="icon-circle icon-circle-blue"><i class="ti ti-target-arrow"></i></span>
+                    <h3>Objectifs</h3>
+                </div>
+                {% if project.targets %}
+                    <p class="pd-text">{{ project.targets }}</p>
+                {% else %}
+                    <p class="pd-text-empty">Aucun objectif renseigné.</p>
+                {% endif %}
+            </div>
+
+            <!-- Contributeurs -->
+            <div class="pd-card">
+                <div class="pd-card-heading">
+                    <span class="icon-circle icon-circle-blue"><i class="ti ti-users-group"></i></span>
+                    <h3>Contributeurs</h3>
+                    <span class="pd-count-badge">{{ project.contributor_count }}</span>
+                </div>
+
+                {% if project.contributors %}
+                <div class="pd-contributors-grid">
+                    {% for c in project.contributors %}
+                    <div class="pd-contributor">
+                        <span class="avatar-ring avatar-ring-blue">{{ c.username|slice:":1"|upper }}</span>
+                        <div class="pd-contributor-info">
+                            <div class="person-name">{{ c.get_full_name|default:c.username }}</div>
+                            <div class="pd-contributor-count">{{ c.task_count }} tâche{{ c.task_count|pluralize }}</div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="pd-text-empty">Aucun contributeur assigné pour le moment.</p>
+                {% endif %}
+            </div>
+
+        </div>
+
+        <!-- Colonne latérale -->
+        <div class="pd-side">
+
+            <!-- Avancement -->
+            <div class="pd-card">
+                <div class="pd-card-heading">
+                    <span class="icon-circle icon-circle-green"><i class="ti ti-progress-check"></i></span>
+                    <h3>Avancement</h3>
+                </div>
+                <span class="status-pill status-pill-lg status-pill-{{ project.status|lower }}">
+                    <i class="ti ti-circle-dot me-1"></i>{{ project.get_status_display }}
+                </span>
+            </div>
+
+            <!-- Responsables -->
+            <div class="pd-card">
+                <div class="pd-card-heading">
+                    <span class="icon-circle icon-circle-orange"><i class="ti ti-users"></i></span>
+                    <h3>Responsables</h3>
+                </div>
+
+                <div class="person-row">
+                    <span class="avatar-ring avatar-ring-blue">
+                        {% if project.owner %}{{ project.owner|slice:":1"|upper }}{% else %}?{% endif %}
+                    </span>
+                    <div>
+                        <div class="person-role">Owner</div>
+                        <div class="person-name">{{ project.owner|default:"Non défini" }}</div>
+                    </div>
+                </div>
+
+                <div class="person-row mb-0">
+                    <span class="avatar-ring avatar-ring-green">
+                        {{ project.manager.username|slice:":1"|upper }}
+                    </span>
+                    <div>
+                        <div class="person-role">Project Manager</div>
+                        <div class="person-name">{{ project.manager.get_full_name|default:project.manager.username }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Planning -->
+            <div class="pd-card">
+                <div class="pd-card-heading">
+                    <span class="icon-circle icon-circle-green"><i class="ti ti-calendar-event"></i></span>
+                    <h3>Planning</h3>
+                </div>
+
+                <div class="timeline-row">
+                    <div class="timeline-dot timeline-dot-start"></div>
+                    <div>
+                        <div class="person-role">Date de début</div>
+                        <div class="person-name">
+                            {% if project.start_date %}{{ project.start_date|date:"d F Y" }}
+                            {% else %}<span class="pd-undated">Non définie</span>{% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="timeline-connector"></div>
+
+                {% if project.duration_display %}
+                <div class="duration-badge">
+                    <i class="ti ti-hourglass"></i>
+                    {{ project.duration_display }}
+                </div>
+                <div class="timeline-connector"></div>
+                {% endif %}
+
+                <div class="timeline-row mb-0">
+                    <div class="timeline-dot timeline-dot-end"></div>
+                    <div>
+                        <div class="person-role">Date de fin</div>
+                        <div class="person-name">
+                            {% if project.end_date %}{{ project.end_date|date:"d F Y" }}
+                            {% else %}<span class="pd-undated">Non définie</span>{% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<style>
+    .pd-wrapper { max-width: 1400px; margin: 0 auto; }
+
+    /* ===== HERO (toujours sombre, volontaire) ===== */
+    .pd-hero {
+        position: relative;
+        border-radius: 20px;
+        padding: 2rem 2.25rem;
+        margin-bottom: 1.5rem;
+        background: linear-gradient(135deg, #12182b 0%, #1c2540 55%, #101627 100%);
+        color: #fff;
+        overflow: hidden;
+        box-shadow: 0 12px 32px rgba(15, 23, 42, 0.18);
+    }
+    .pd-hero-orb {
+        position: absolute;
+        top: -120px; right: -80px;
+        width: 320px; height: 320px;
+        border-radius: 50%;
+        filter: blur(50px);
+        opacity: 0.5;
+        pointer-events: none;
+    }
+    .rag-glow-red .pd-hero-orb    { background: radial-gradient(circle, #e03131, transparent 70%); }
+    .rag-glow-orange .pd-hero-orb { background: radial-gradient(circle, #f08c00, transparent 70%); }
+    .rag-glow-green .pd-hero-orb  { background: radial-gradient(circle, #2f9e44, transparent 70%); }
+    .rag-glow-none .pd-hero-orb   { background: radial-gradient(circle, #4692ec, transparent 70%); }
+
+    .pd-hero-top {
+        position: relative; z-index: 1;
+        display: flex; justify-content: space-between; align-items: flex-start;
+        flex-wrap: wrap; gap: 1.25rem;
+    }
+
+    .pd-badges { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem; }
+
+    .rag-badge {
+        display: inline-flex; align-items: center; gap: 0.4rem;
+        padding: 0.35rem 0.9rem; border-radius: 50px;
+        font-size: 0.72rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;
+        color: #fff; box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    }
+    .rag-badge-red    { background: #e03131; }
+    .rag-badge-orange { background: #f08c00; }
+    .rag-badge-green  { background: #2f9e44; }
+    .rag-badge-none   { background: #495057; }
+    .rag-pulse {
+        width: 6px; height: 6px; border-radius: 50%; background: #fff;
+        box-shadow: 0 0 0 0 rgba(255,255,255,0.7);
+        animation: pd-pulse 1.8s infinite;
+    }
+    @keyframes pd-pulse {
+        0%   { box-shadow: 0 0 0 0 rgba(255,255,255,0.6); }
+        70%  { box-shadow: 0 0 0 6px rgba(255,255,255,0); }
+        100% { box-shadow: 0 0 0 0 rgba(255,255,255,0); }
+    }
+
+    .status-pill {
+        display: inline-flex; align-items: center;
+        padding: 0.35rem 0.85rem; border-radius: 50px;
+        font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px;
+    }
+    .status-pill-lg { font-size: 0.85rem; padding: 0.5rem 1.1rem; }
+    .status-pill-not_started { background: rgba(137, 145, 160, 0.16); color: var(--muted); }
+    .status-pill-in_progress { background: rgba(232, 89, 12, 0.14); color: #e8590c; }
+    .status-pill-on_hold     { background: rgba(59, 130, 246, 0.14); color: #3b82f6; }
+    .status-pill-completed   { background: rgba(47, 158, 68, 0.14); color: #2f9e44; }
+    .status-pill-cancelled   { background: rgba(224, 49, 49, 0.14); color: #e03131; }
+    .pd-hero .status-pill:not(.status-pill-lg) { background: rgba(255,255,255,0.12); color: #e9ecf5; }
+
+    .badge-outline {
+        display: inline-flex; align-items: center;
+        padding: 0.35rem 0.75rem; border-radius: 50px;
+        font-size: 0.72rem; font-weight: 600;
+        color: #c7cee0; background: rgba(255,255,255,0.06);
+        border: 1px solid rgba(255,255,255,0.14);
+    }
+
+    .pd-title {
+        font-size: 2rem; font-weight: 800; letter-spacing: -0.8px;
+        line-height: 1.15; margin-bottom: 0.6rem; color: #fff;
+    }
+    .pd-account {
+        display: flex; align-items: center; gap: 0.5rem;
+        color: #aab2c8; font-size: 0.9rem;
+    }
+    .pd-account-sep { opacity: 0.5; }
+
+    .pd-actions { display: flex; gap: 0.6rem; flex-wrap: wrap; }
+    .btn-pd {
+        display: inline-flex; align-items: center; gap: 0.4rem;
+        padding: 0.55rem 1rem; border-radius: 10px;
+        font-size: 0.85rem; font-weight: 600; text-decoration: none;
+        transition: all 0.18s ease; border: 1.5px solid transparent;
+    }
+    .btn-pd-primary { background: var(--brand); color: #fff; }
+    .btn-pd-primary:hover { background: #2563eb; color: #fff; transform: translateY(-1px); }
+    .btn-pd-outline { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.2); color: #fff; }
+    .btn-pd-outline:hover { background: rgba(255,255,255,0.16); color: #fff; }
+    .btn-pd-outline-light { background: rgba(255,255,255,0.9); border-color: transparent; color: #b3670a; }
+    .btn-pd-outline-light:hover { background: #fff; }
+    .btn-pd-ghost { background: transparent; border-color: rgba(255,255,255,0.16); color: #c7cee0; }
+    .btn-pd-ghost:hover { background: rgba(255,255,255,0.08); color: #fff; }
+
+    /* Delegation */
+    .pd-delegation-banner {
+        position: relative; z-index: 1;
+        margin-top: 1.5rem; padding: 0.9rem 1.1rem;
+        background: rgba(255, 193, 7, 0.12);
+        border: 1px solid rgba(255, 193, 7, 0.35);
+        border-radius: 12px;
+        display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap;
+    }
+    .pd-delegation-info { display: flex; align-items: center; gap: 0.75rem; }
+    .pd-delegation-icon {
+        width: 36px; height: 36px; border-radius: 10px;
+        background: rgba(255,193,7,0.2); color: #ffc94d;
+        display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0;
+    }
+    .pd-delegation-title { font-size: 0.88rem; font-weight: 600; color: #fff; }
+    .pd-delegation-meta { font-size: 0.78rem; color: #d4d8e2; margin-top: 0.1rem; }
+
+    .pd-delegate-cta { position: relative; z-index: 1; margin-top: 1.25rem; }
+    .pd-delegate-cta a {
+        display: inline-flex; align-items: center; gap: 0.5rem;
+        padding: 0.6rem 1.1rem; border-radius: 10px;
+        background: rgba(70, 146, 236, 0.16); border: 1.5px dashed rgba(70, 146, 236, 0.5);
+        color: #8fbcf5; font-weight: 600; font-size: 0.85rem; text-decoration: none;
+        transition: all 0.18s ease;
+    }
+    .pd-delegate-cta a:hover { background: rgba(70, 146, 236, 0.28); color: #cfe3fb; }
+
+    /* ===== STATS STRIP ===== */
+    .pd-stats-strip {
+        display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    .pd-stat {
+        background: var(--bg-surface); border: 1px solid var(--card-border);
+        border-radius: 14px; padding: 1rem 1.1rem;
+        display: flex; align-items: center; gap: 0.85rem;
+        box-shadow: 0 1px 6px rgba(0,0,0,0.05);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    [data-bs-theme="dark"] .pd-stat { box-shadow: none; }
+    .pd-stat:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0,0,0,0.08); }
+    .pd-stat-icon {
+        width: 42px; height: 42px; min-width: 42px; border-radius: 12px;
+        display: flex; align-items: center; justify-content: center; font-size: 1.15rem;
+    }
+    .pd-stat-icon-blue   { background: rgba(59, 130, 246, 0.14); color: #3b82f6; }
+    .pd-stat-icon-green  { background: rgba(47, 158, 68, 0.14); color: #2f9e44; }
+    .pd-stat-icon-orange { background: rgba(232, 89, 12, 0.14); color: #e8590c; }
+    .pd-stat-icon-purple { background: rgba(156, 54, 181, 0.14); color: #9c36b5; }
+    .pd-stat-value { font-size: 1.05rem; font-weight: 700; color: var(--ink); line-height: 1.2; }
+    .pd-stat-label { font-size: 0.72rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.3px; font-weight: 600; }
+
+    /* ===== GRID ===== */
+    .pd-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; align-items: start; }
+    .pd-main, .pd-side { display: flex; flex-direction: column; gap: 1.25rem; }
+
+    .pd-card {
+        background: var(--bg-surface); border: 1px solid var(--card-border);
+        border-radius: 16px; padding: 1.5rem;
+        box-shadow: 0 1px 6px rgba(0,0,0,0.05);
+        transition: box-shadow 0.2s ease, transform 0.2s ease;
+    }
+    [data-bs-theme="dark"] .pd-card { box-shadow: none; }
+    .pd-card:hover { box-shadow: 0 8px 24px rgba(0,0,0,0.08); transform: translateY(-2px); }
+
+    .pd-card-heading {
+        display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.15rem;
+    }
+    .pd-card-heading h3 { font-size: 1.02rem; font-weight: 700; color: var(--ink); margin: 0; }
+    .pd-count-badge {
+        margin-left: auto; background: rgba(59, 130, 246, 0.14); color: #3b82f6;
+        font-size: 0.75rem; font-weight: 700; padding: 0.2rem 0.65rem; border-radius: 50px;
+    }
+
+    .icon-circle {
+        width: 40px; height: 40px; min-width: 40px; border-radius: 12px;
+        display: flex; align-items: center; justify-content: center; font-size: 1.1rem;
+    }
+    .icon-circle-purple { background: rgba(156, 54, 181, 0.14); color: #9c36b5; }
+    .icon-circle-blue   { background: rgba(59, 130, 246, 0.14); color: #3b82f6; }
+    .icon-circle-orange { background: rgba(232, 89, 12, 0.14); color: #e8590c; }
+    .icon-circle-green  { background: rgba(47, 158, 68, 0.14); color: #2f9e44; }
+
+    .pd-text { white-space: pre-line; line-height: 1.75; color: var(--ink); font-size: 0.95rem; margin: 0; opacity: 0.85; }
+    .pd-text-empty { color: var(--muted); font-style: italic; font-size: 0.9rem; margin: 0; }
+    .pd-undated { color: var(--muted); font-weight: 400; }
+
+    /* Contributors */
+    .pd-contributors-grid {
+        display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 0.6rem;
+    }
+    .pd-contributor {
+        display: flex; align-items: center; gap: 0.7rem;
+        padding: 0.6rem; border-radius: 12px;
+        background: var(--alert-bg); transition: background 0.15s ease;
+    }
+    .pd-contributor:hover { filter: brightness(1.05); }
+    .pd-contributor-count { font-size: 0.72rem; color: var(--muted); }
+
+    /* Responsables / rows */
+    .person-row {
+        display: flex; align-items: center; gap: 0.85rem;
+        margin-bottom: 1.1rem; padding: 0.6rem; border-radius: 10px;
+        transition: background 0.15s ease;
+    }
+    .person-row:hover { background: var(--alert-bg); }
+    .avatar-ring {
+        width: 42px; height: 42px; min-width: 42px; border-radius: 12px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1rem; font-weight: 700; border: 2px solid;
+    }
+    .avatar-ring-blue  { background: rgba(59, 130, 246, 0.14); color: #3b82f6; border-color: rgba(59, 130, 246, 0.35); }
+    .avatar-ring-green { background: rgba(47, 158, 68, 0.14); color: #2f9e44; border-color: rgba(47, 158, 68, 0.35); }
+
+    .person-role { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.4px; font-weight: 700; }
+    .person-name { font-size: 0.92rem; font-weight: 600; color: var(--ink); }
+
+    /* Timeline */
+    .timeline-row { display: flex; align-items: center; gap: 0.85rem; margin-bottom: 0.4rem; }
+    .timeline-dot { width: 14px; height: 14px; min-width: 14px; border-radius: 50%; border: 3px solid; background: var(--bg-surface); }
+    .timeline-dot-start { border-color: #2f9e44; }
+    .timeline-dot-end   { border-color: #e03131; }
+    .timeline-connector {
+        width: 2px; height: 20px; margin-left: 6px;
+        background: repeating-linear-gradient(180deg, var(--card-border) 0px, var(--card-border) 4px, transparent 4px, transparent 8px);
+    }
+    .duration-badge {
+        display: inline-flex; align-items: center; gap: 0.4rem;
+        margin-left: 26px; padding: 0.35rem 0.85rem;
+        background: var(--alert-bg);
+        border: 1px solid var(--card-border); border-radius: 8px;
+        font-size: 0.78rem; font-weight: 700; color: var(--brand);
+    }
+
+    /* Responsive */
+    @media (max-width: 992px) {
+        .pd-grid { grid-template-columns: 1fr; }
+        .pd-stats-strip { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 576px) {
+        .pd-stats-strip { grid-template-columns: 1fr; }
+        .pd-title { font-size: 1.5rem; }
+    }
+</style>
+{% endblock %}

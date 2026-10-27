@@ -1,0 +1,262 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard PM — PMS{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="dashboard-header mb-4">
+    <p class="mb-1 dh-date">{% now "l d F Y" %}</p>
+    <h2 class="mb-0">Bienvenue, {{ user.username }} <span class="role-tag role-tag-pm">Project Manager</span></h2>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-lg-4">
+        <div class="stat-card">
+            <span class="stat-icon stat-icon-blue"><i class="ti ti-folder"></i></span>
+            <div>
+                <div class="stat-number">{{ total_projects }}</div>
+                <div class="stat-label">Mes projets</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-4">
+        <div class="stat-card">
+            <span class="stat-icon stat-icon-orange"><i class="ti ti-checklist"></i></span>
+            <div>
+                <div class="stat-number">{{ total_tasks }}</div>
+                <div class="stat-label">Tâches sur mes projets</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-4">
+        <div class="stat-card">
+            <span class="stat-icon stat-icon-green"><i class="ti ti-users"></i></span>
+            <div>
+                <div class="stat-number">{{ total_contributors }}</div>
+                <div class="stat-label">Contributeurs</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-lg-8">
+        <div class="content-card">
+            <div class="content-card-header">
+                <h3 class="mb-0">Mes projets</h3>
+                <a href="{% url 'projects:project_list' %}" class="view-all-link">Voir tout <i class="ti ti-arrow-right"></i></a>
+            </div>
+            <div class="content-card-body">
+                {% for project in projects|slice:":6" %}
+                <div class="project-line">
+                    <span class="rag-dot rag-dot-{{ project.global_rag_status|lower }}"></span>
+                    <a href="{% url 'projects:project_detail' project.pk %}" class="project-line-name">{{ project.name }}</a>
+                    <span class="project-line-manager">{{ project.get_account_name_display }}</span>
+                </div>
+                {% empty %}
+                <p class="mb-0 empty-state">Aucun projet géré pour le moment.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="content-card">
+            <div class="content-card-header">
+                <h3 class="mb-0">Tâches récentes</h3>
+                <a href="{% url 'tasks:task_list' %}" class="view-all-link">Voir tout <i class="ti ti-arrow-right"></i></a>
+            </div>
+            <div class="content-card-body">
+                {% for task in recent_tasks %}
+                <div class="task-line">
+                    <div class="task-line-title">{{ task.title }}</div>
+                    <div class="task-line-meta">{{ task.project.name }} · {{ task.assigned_to.username }}</div>
+                </div>
+                {% empty %}
+                <p class="mb-0 empty-state">Aucune tâche pour le moment.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-lg-6">
+        <div class="content-card">
+            <div class="content-card-header">
+                <h3 class="mb-0">Statut de mes projets</h3>
+                <span class="header-count">{{ total_projects }} au total</span>
+            </div>
+            <div class="content-card-body">
+                <div class="segmented-bar mb-3">
+                    <div class="segment bg-green" style="width: {{ project_pct.completed|default:0 }}%"></div>
+                    <div class="segment bg-blue" style="width: {{ project_pct.in_progress|default:0 }}%"></div>
+                    <div class="segment bg-yellow" style="width: {{ project_pct.on_hold|default:0 }}%"></div>
+                    <div class="segment bg-slate" style="width: {{ project_pct.not_started|default:0 }}%"></div>
+                    <div class="segment bg-red" style="width: {{ project_pct.cancelled|default:0 }}%"></div>
+                </div>
+                <div class="legend-grid">
+                    <div class="legend-item"><span class="legend-dot bg-green"></span>Terminé <b>{{ project_pct.completed|default:0 }}%</b></div>
+                    <div class="legend-item"><span class="legend-dot bg-blue"></span>En cours <b>{{ project_pct.in_progress|default:0 }}%</b></div>
+                    <div class="legend-item"><span class="legend-dot bg-yellow"></span>En attente <b>{{ project_pct.on_hold|default:0 }}%</b></div>
+                    <div class="legend-item"><span class="legend-dot bg-slate"></span>Non commencé <b>{{ project_pct.not_started|default:0 }}%</b></div>
+                    <div class="legend-item"><span class="legend-dot bg-red"></span>Annulé <b>{{ project_pct.cancelled|default:0 }}%</b></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="content-card">
+            <div class="content-card-header">
+                <h3 class="mb-0">Tâches de mes projets</h3>
+                <span class="header-count">{{ total_tasks }} au total</span>
+            </div>
+            <div class="content-card-body">
+                <div class="segmented-bar mb-3">
+                    <div class="segment bg-green" style="width: {{ task_pct.done|default:0 }}%"></div>
+                    <div class="segment bg-blue" style="width: {{ task_pct.in_progress|default:0 }}%"></div>
+                    <div class="segment bg-slate" style="width: {{ task_pct.todo|default:0 }}%"></div>
+                    <div class="segment bg-orange" style="width: {{ task_pct.extra|default:0 }}%"></div>
+                </div>
+                <div class="legend-grid">
+                    <div class="legend-item"><span class="legend-dot bg-green"></span>Terminée <b>{{ task_pct.done|default:0 }}%</b></div>
+                    <div class="legend-item"><span class="legend-dot bg-blue"></span>En cours <b>{{ task_pct.in_progress|default:0 }}%</b></div>
+                    <div class="legend-item"><span class="legend-dot bg-slate"></span>À faire <b>{{ task_pct.todo|default:0 }}%</b></div>
+                    <div class="legend-item"><span class="legend-dot bg-orange"></span>Extra <b>{{ task_pct.extra|default:0 }}%</b></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12">
+        <div class="content-card">
+            <div class="content-card-header">
+                <h3 class="mb-0">Tâches en retard</h3>
+                <span class="badge-overdue">{{ overdue_count }}</span>
+            </div>
+            <div class="content-card-body">
+                {% for task in overdue_tasks %}
+                <div class="task-line task-line-overdue">
+                    <div class="task-line-title">{{ task.title }}</div>
+                    <div class="task-line-meta">{{ task.project.name }} · {{ task.assigned_to.username }} · échéance {{ task.due_date|date:"d/m/Y" }}</div>
+                </div>
+                {% empty %}
+                <p class="mb-0 empty-state">Aucune tâche en retard 🎉</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .dashboard-header h2 { font-size: 1.6rem; font-weight: 700; color: var(--ink); }
+    .dh-date { font-size: 0.9rem; color: var(--muted); }
+    .role-tag {
+        font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
+        padding: 0.25rem 0.6rem; border-radius: 50px; margin-left: 0.5rem;
+        vertical-align: middle;
+    }
+    .role-tag-pm { background: rgba(232, 89, 12, 0.15); color: #e8590c; }
+
+    .stat-card {
+        background: var(--bg-surface); border: 1px solid var(--card-border);
+        border-radius: 14px; padding: 1.25rem;
+        display: flex; align-items: center; gap: 1rem;
+        box-shadow: 0 1px 6px rgba(0,0,0,0.05); height: 100%;
+        transition: box-shadow 0.15s ease, transform 0.15s ease;
+    }
+    [data-bs-theme="dark"] .stat-card { box-shadow: none; }
+    .stat-card:hover { box-shadow: 0 4px 14px rgba(0,0,0,0.08); transform: translateY(-1px); }
+    .stat-icon {
+        width: 46px; height: 46px; border-radius: 12px; flex-shrink: 0;
+        display: flex; align-items: center; justify-content: center; font-size: 1.25rem;
+    }
+    .stat-icon-blue   { background: rgba(59, 130, 246, 0.14); color: #3b82f6; }
+    .stat-icon-orange { background: rgba(232, 89, 12, 0.14); color: #e8590c; }
+    .stat-icon-green  { background: rgba(47, 158, 68, 0.14); color: #2f9e44; }
+    .stat-number { font-size: 1.55rem; font-weight: 700; color: var(--ink); line-height: 1.1; }
+    .stat-label { font-size: 0.78rem; color: var(--muted); margin-top: 0.25rem; }
+
+    .content-card {
+        background: var(--bg-surface); border: 1px solid var(--card-border);
+        border-radius: 14px; box-shadow: 0 1px 6px rgba(0,0,0,0.05);
+        height: 100%; display: flex; flex-direction: column;
+    }
+    [data-bs-theme="dark"] .content-card { box-shadow: none; }
+    .content-card-header {
+        padding: 1.1rem 1.25rem; border-bottom: 1px solid var(--card-border);
+        display: flex; justify-content: space-between; align-items: center; gap: 0.75rem;
+    }
+    .content-card-header h3 { font-size: 1rem; font-weight: 700; color: var(--ink); }
+    .header-count { font-size: 0.8rem; color: var(--muted); white-space: nowrap; }
+    .content-card-body { padding: 1rem 1.25rem 1.1rem; flex: 1; }
+    .view-all-link {
+        font-size: 0.8rem; font-weight: 600; color: var(--brand); white-space: nowrap;
+        display: inline-flex; align-items: center; gap: 0.25rem; transition: gap 0.15s ease;
+    }
+    .view-all-link:hover { gap: 0.45rem; text-decoration: none; }
+
+    .project-line {
+        display: flex; align-items: center; gap: 0.7rem;
+        padding: 0.7rem 0.25rem; margin: 0 -0.25rem;
+        border-bottom: 1px solid var(--card-border); border-radius: 8px;
+        transition: background-color 0.15s ease;
+    }
+    .project-line:hover { background-color: var(--alert-bg); }
+    .project-line:last-child { border-bottom: none; }
+    .rag-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+    .rag-dot-red { background: #e03131; }
+    .rag-dot-orange { background: #f08c00; }
+    .rag-dot-green { background: #2f9e44; }
+    .rag-dot-none { background: #8891a0; opacity: 0.4; }
+    .project-line-name {
+        flex: 1; min-width: 0; font-size: 0.88rem; font-weight: 600; color: var(--ink);
+        text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .project-line-name:hover { color: var(--brand); }
+    .project-line-manager { font-size: 0.78rem; color: var(--muted); flex-shrink: 0; }
+
+    .task-line {
+        padding: 0.7rem 0.25rem; margin: 0 -0.25rem;
+        border-bottom: 1px solid var(--card-border); border-radius: 8px;
+        transition: background-color 0.15s ease;
+    }
+    .task-line:hover { background-color: var(--alert-bg); }
+    .task-line:last-child { border-bottom: none; }
+    .task-line-title { font-size: 0.85rem; font-weight: 600; color: var(--ink); }
+    .task-line-meta { font-size: 0.75rem; color: var(--muted); margin-top: 0.2rem; }
+    .task-line-overdue .task-line-title { color: #e03131; }
+
+    .empty-state { padding: 1.25rem 0; text-align: center; font-size: 0.85rem; color: var(--muted); }
+
+    .segmented-bar {
+        display: flex; height: 10px; border-radius: 50px; overflow: hidden;
+        background: var(--card-border);
+    }
+    .segment { height: 100%; }
+    .bg-green  { background-color: #2f9e44; }
+    .bg-blue   { background-color: #3b82f6; }
+    .bg-yellow { background-color: #f2b705; }
+    .bg-slate  { background-color: #8891a0; }
+    .bg-red    { background-color: #e03131; }
+    .bg-orange { background-color: #e8590c; }
+
+    .legend-grid {
+        display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 0.6rem 1rem;
+    }
+    .legend-item { font-size: 0.8rem; color: var(--muted); display: flex; align-items: center; gap: 0.4rem; }
+    .legend-item b { color: var(--ink); margin-left: auto; }
+    .legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+    .badge-overdue {
+        background: rgba(224, 49, 49, 0.14); color: #e03131; font-weight: 700; font-size: 0.85rem;
+        padding: 0.2rem 0.65rem; border-radius: 50px;
+    }
+
+    @media (max-width: 576px) {
+        .content-card-header { flex-wrap: wrap; }
+        .project-line-manager { display: none; }
+    }
+</style>
+{% endblock %}

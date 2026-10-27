@@ -1,0 +1,294 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard Admin — PMS{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="dashboard-header mb-4">
+    <p class="text-muted mb-1">{% now "l d F Y" %}</p>
+    <h2 class="mb-0">Bienvenue, {{ user.username }} <span class="role-tag role-tag-admin">Admin</span></h2>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-lg-3">
+        <div class="stat-card">
+            <span class="stat-icon stat-icon-blue"><i class="ti ti-users"></i></span>
+            <div>
+                <div class="stat-number">{{ total_users }}</div>
+                <div class="stat-label">Utilisateurs</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="stat-card">
+            <span class="stat-icon stat-icon-red"><i class="ti ti-shield"></i></span>
+            <div>
+                <div class="stat-number">{{ total_admins }}</div>
+                <div class="stat-label">Admins</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="stat-card">
+            <span class="stat-icon stat-icon-orange"><i class="ti ti-briefcase"></i></span>
+            <div>
+                <div class="stat-number">{{ total_pms }}</div>
+                <div class="stat-label">Project Managers</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="stat-card">
+            <span class="stat-icon stat-icon-green"><i class="ti ti-user"></i></span>
+            <div>
+                <div class="stat-number">{{ total_regular_users }}</div>
+                <div class="stat-label">Utilisateurs standards</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-lg-8">
+        <div class="content-card">
+            <div class="content-card-header">
+                <h3 class="mb-0">Tous les projets</h3>
+                <a href="{% url 'projects:project_list' %}" class="view-all-link">Voir tout <i class="ti ti-arrow-right"></i></a>
+            </div>
+            <div class="content-card-body">
+                {% for project in projects|slice:":6" %}
+                <div class="project-line">
+                    <span class="rag-dot rag-dot-{{ project.global_rag_status|lower }}"></span>
+                    <a href="{% url 'projects:project_detail' project.pk %}" class="project-line-name">{{ project.name }}</a>
+                    <span class="project-line-manager">{{ project.manager.username }}</span>
+                </div>
+                {% empty %}
+                <p class="text-muted mb-0">Aucun projet pour le moment.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="content-card">
+            <div class="content-card-header">
+                <h3 class="mb-0">Tâches récentes</h3>
+            </div>
+            <div class="content-card-body">
+                {% for task in recent_tasks %}
+                <div class="task-line">
+                    <div class="task-line-title">{{ task.title }}</div>
+                    <div class="task-line-meta">{{ task.project.name }} · {{ task.assigned_to.username }}</div>
+                </div>
+                {% empty %}
+                <p class="text-muted mb-0">Aucune tâche récente.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row g-3 mb-4">
+    <!-- Statut des projets -->
+    <div class="col-lg-6">
+        <div class="content-card">
+            <div class="content-card-header">
+                <h3 class="mb-0">Statut des projets</h3>
+                <span class="text-muted small">{{ total_projects }} au total</span>
+            </div>
+            <div class="content-card-body">
+                <div class="chart-wrap">
+                    <canvas id="projectStatusChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Répartition RAG -->
+    <div class="col-lg-6">
+        <div class="content-card">
+            <div class="content-card-header">
+                <h3 class="mb-0">Répartition  des status</h3>
+            </div>
+            <div class="content-card-body">
+                <div class="chart-wrap">
+                    <canvas id="ragChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tâches en retard -->
+    <div class="col-12">
+        <div class="content-card">
+            <div class="content-card-header">
+                <h3 class="mb-0">Tâches en retard</h3>
+                <span class="badge-overdue">{{ overdue_count }}</span>
+            </div>
+            <div class="content-card-body">
+                {% for task in overdue_tasks %}
+                <div class="task-line">
+                    <div class="task-line-title">{{ task.title }}</div>
+                    <div class="task-line-meta">{{ task.project.name }} · {{ task.assigned_to.username }} · échéance {{ task.due_date|date:"d/m/Y" }}</div>
+                </div>
+                {% empty %}
+                <p class="text-muted mb-0">Aucune tâche en retard 🎉</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+<style>
+  .dashboard-header h2 { font-size: 1.6rem; font-weight: 700; color: var(--ink); }
+.role-tag {
+    font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
+    padding: 0.25rem 0.6rem; border-radius: 50px; margin-left: 0.5rem;
+    vertical-align: middle;
+}
+.role-tag-admin { background: #fff5f5; color: #e03131; }
+[data-bs-theme="dark"] .role-tag-admin { background: rgba(224,49,49,0.18); color: #ff8787; }
+
+.stat-card {
+    background: var(--bg-surface); border-radius: 14px; padding: 1.1rem;
+    display: flex; align-items: center; gap: 0.9rem;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.05); height: 100%;
+    transition: background-color 0.2s ease;
+}
+.stat-icon {
+    width: 44px; height: 44px; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center; font-size: 1.2rem;
+}
+.stat-icon-blue   { background: #e7f5ff; color: #1971c2; }
+.stat-icon-red    { background: #fff5f5; color: #e03131; }
+.stat-icon-orange { background: #fff4e6; color: #e8590c; }
+.stat-icon-green  { background: #ebfbee; color: #2f9e44; }
+[data-bs-theme="dark"] .stat-icon-blue   { background: rgba(25,113,194,0.18); color: #74b3f0; }
+[data-bs-theme="dark"] .stat-icon-red    { background: rgba(224,49,49,0.18); color: #ff8787; }
+[data-bs-theme="dark"] .stat-icon-orange { background: rgba(232,89,12,0.18); color: #f5a35e; }
+[data-bs-theme="dark"] .stat-icon-green  { background: rgba(47,158,68,0.18); color: #79d190; }
+
+.stat-number { font-size: 1.5rem; font-weight: 700; color: var(--ink); line-height: 1; }
+.stat-label { font-size: 0.78rem; color: var(--muted); margin-top: 0.2rem; }
+
+.content-card {
+    background: var(--bg-surface); border-radius: 14px;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.05); height: 100%;
+    transition: background-color 0.2s ease;
+}
+.content-card-header {
+    padding: 1rem 1.25rem; border-bottom: 1px solid var(--border);
+    display: flex; justify-content: space-between; align-items: center;
+}
+.content-card-header h3 { font-size: 1rem; font-weight: 700; color: var(--ink); }
+.content-card-body { padding: 0.5rem 1.25rem 1rem; }
+.view-all-link { font-size: 0.8rem; font-weight: 600; color: #4692ec; }
+
+.project-line {
+    display: flex; align-items: center; gap: 0.6rem;
+    padding: 0.6rem 0; border-bottom: 1px solid var(--border);
+}
+.project-line:last-child { border-bottom: none; }
+.rag-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+.rag-dot-red { background: #e03131; }
+.rag-dot-orange { background: #f08c00; }
+.rag-dot-green { background: #2f9e44; }
+.rag-dot-none { background: #dfe3e8; }
+.project-line-name { flex: 1; font-size: 0.88rem; font-weight: 600; color: var(--ink); text-decoration: none; }
+.project-line-manager { font-size: 0.78rem; color: var(--muted); }
+
+.task-line { padding: 0.6rem 0; border-bottom: 1px solid var(--border); }
+.task-line:last-child { border-bottom: none; }
+.task-line-title { font-size: 0.85rem; font-weight: 600; color: var(--ink); }
+.task-line-meta { font-size: 0.75rem; color: var(--muted); margin-top: 0.15rem; }
+
+.segmented-bar {
+    display: flex; width: 100%; height: 10px;
+    border-radius: 20px; overflow: hidden; background: var(--border);
+}
+.segmented-bar .segment { height: 100%; min-width: 2px; }
+.bg-green  { background: #2f9e44 !important; }
+.bg-blue   { background: #1971c2 !important; }
+.bg-yellow { background: #f5b800 !important; }
+.bg-slate  { background: #adb5bd !important; }
+.bg-red    { background: #e03131 !important; }
+.bg-orange { background: #e8590c !important; }
+
+.legend-grid { display: flex; flex-direction: column; gap: 0.5rem; }
+.legend-item { font-size: 0.83rem; color: var(--muted); display: flex; align-items: center; gap: 0.5rem; }
+.legend-item b { color: var(--ink); }
+.legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+.badge-overdue {
+    background: #fff5f5; color: #e03131; font-weight: 700;
+    font-size: 0.78rem; padding: 0.2rem 0.65rem; border-radius: 20px;
+}
+[data-bs-theme="dark"] .badge-overdue { background: rgba(224,49,49,0.18); color: #ff8787; }
+</style>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const chartFont = "'Inter', sans-serif";
+
+    const baseOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: '68%',
+        layout: { padding: 8 },
+        plugins: {
+            legend: {
+                position: 'bottom',
+                labels: { font: { family: chartFont, size: 12 }, boxWidth: 10, padding: 14, usePointStyle: true }
+            },
+            tooltip: {
+                callbacks: {
+                    label: function(ctx) {
+                        const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
+                        const pct = total ? Math.round((ctx.raw / total) * 100) : 0;
+                        return ` ${ctx.label}: ${ctx.raw} (${pct}%)`;
+                    }
+                }
+            }
+        }
+    };
+
+    // ----- Statut des projets -----
+    new Chart(document.getElementById('projectStatusChart'), {
+        type: 'doughnut',
+        data: {
+            labels: ['Terminé', 'En cours', 'En attente', 'Non commencé', 'Annulé'],
+            datasets: [{
+                data: [
+                    {{ project_stats.completed }},
+                    {{ project_stats.in_progress }},
+                    {{ project_stats.on_hold }},
+                    {{ project_stats.not_started }},
+                    {{ project_stats.cancelled }}
+                ],
+                backgroundColor: ['#2f9e44', '#1971c2', '#f5b800', '#adb5bd', '#e03131'],
+                borderWidth: 2,
+                borderColor: '#fff',
+            }]
+        },
+        options: baseOptions
+    });
+
+    // ----- Répartition RAG -----
+    new Chart(document.getElementById('ragChart'), {
+        type: 'doughnut',
+        data: {
+            labels: ['Rouge', 'Orange', 'Vert', 'Non défini'],
+            datasets: [{
+                data: [
+                    {{ rag_counts.RED }},
+                    {{ rag_counts.ORANGE }},
+                    {{ rag_counts.GREEN }},
+                    {{ rag_counts.NONE }}
+                ],
+                backgroundColor: ['#e03131', '#e8590c', '#2f9e44', '#adb5bd'],
+                borderWidth: 2,
+                borderColor: '#fff',
+            }]
+        },
+        options: baseOptions
+    });
+    window.dispatchEvent(new Event('resize'));
+});
+</script>
+{% endblock %}

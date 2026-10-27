@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+{% block title %}Supprimer — {{ task.title }}{% endblock %}
+{% block page_title %}Supprimer la tâche{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+
+        <div class="card border-danger">
+            <div class="card-header bg-red-lt border-0">
+                <h3 class="card-title mb-0 text-danger">
+                    <i class="ti ti-alert-triangle me-2"></i> Confirmation de suppression
+                </h3>
+            </div>
+            <div class="card-body">
+                <p>
+                    Es-tu sûr(e) de vouloir supprimer définitivement la tâche
+                    <strong>« {{ task.title }} »</strong> du projet
+                    <strong>{{ task.project.name }}</strong> ?
+                </p>
+                <p class="text-muted small mb-0">
+                    Cette action est irréversible.
+                </p>
+            </div>
+            <div class="card-footer d-flex justify-content-end gap-2">
+                <a href="{% url 'tasks:task_detail' task.pk %}" class="btn btn-outline-secondary">
+                    <i class="ti ti-x me-1"></i> Annuler
+                </a>
+                <form method="POST">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">
+                        <i class="ti ti-trash me-1"></i> Supprimer définitivement
+                    </button>
+                </form>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

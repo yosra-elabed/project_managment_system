@@ -1,0 +1,343 @@
+{% extends 'base.html' %}
+{% block title %}Délégations — PMS{% endblock %}
+{% block page_title %}Délégations{% endblock %}
+
+{% block content %}
+<div class="dl-wrapper">
+
+    <!-- ===== HERO HEADER ===== -->
+    <div class="dl-hero">
+        <div class="dl-hero-orb"></div>
+        <div class="dl-hero-top">
+            <div>
+                <p class="dl-hero-subtitle">Gestion des responsabilités temporaires</p>
+                <h1 class="dl-hero-title">Délégations actives</h1>
+            </div>
+            <a href="{% url 'projects:delegation_create_generic' %}" class="btn-pd btn-pd-primary">
+                <i class="ti ti-plus"></i> Nouvelle délégation
+            </a>
+        </div>
+    </div>
+
+    <!-- ===== STATS STRIP ===== -->
+    <div class="dl-stats-strip">
+        <div class="dl-stat">
+            <span class="dl-stat-icon dl-stat-icon-blue"><i class="ti ti-repeat"></i></span>
+            <div>
+                <div class="dl-stat-value">{{ delegations|length }}</div>
+                <div class="dl-stat-label">Délégation{{ delegations|length|pluralize }} en cours</div>
+            </div>
+        </div>
+        <div class="dl-stat">
+            <span class="dl-stat-icon dl-stat-icon-orange"><i class="ti ti-calendar-time"></i></span>
+            <div>
+                <div class="dl-stat-value">{{ delegations_with_deadline_count|default:"0" }}</div>
+                <div class="dl-stat-label">Avec échéance définie</div>
+            </div>
+        </div>
+        <div class="dl-stat">
+            <span class="dl-stat-icon dl-stat-icon-green"><i class="ti ti-infinity"></i></span>
+            <div>
+                <div class="dl-stat-value">{{ delegations_open_count|default:"0" }}</div>
+                <div class="dl-stat-label">Sans échéance</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== LISTE ===== -->
+    {% if delegations %}
+    <div class="dl-grid">
+        {% for d in delegations %}
+        <div class="dl-card">
+            <div class="dl-card-top">
+                <span class="rag-dot rag-dot-{{ d.project.global_rag_status|lower }}"></span>
+                <a href="{% url 'projects:project_detail' d.project.pk %}" class="dl-project-name">
+                    {{ d.project.name }}
+                </a>
+                {% if d.end_date %}
+                    <span class="dl-end-badge">
+                        <i class="ti ti-calendar-event"></i> {{ d.end_date|date:"d/m/Y" }}
+                    </span>
+                {% else %}
+                    <span class="dl-end-badge dl-end-badge-open">
+                        <i class="ti ti-infinity"></i> Ouverte
+                    </span>
+                {% endif %}
+            </div>
+
+            <div class="dl-transfer">
+                <div class="dl-transfer-person">
+                    <span class="avatar-ring avatar-ring-blue">{{ d.delegator.username|slice:":1"|upper }}</span>
+                    <div>
+                        <div class="person-role">Délègue de</div>
+                        <div class="person-name">{{ d.delegator.username }}</div>
+                    </div>
+                </div>
+
+                <span class="dl-transfer-arrow"><i class="ti ti-arrow-right"></i></span>
+
+                <div class="dl-transfer-person">
+                    <span class="avatar-ring avatar-ring-green">{{ d.deputy.username|slice:":1"|upper }}</span>
+                    <div>
+                        <div class="person-role">Responsable temp.</div>
+                        <div class="person-name">{{ d.deputy.username }}</div>
+                    </div>
+                </div>
+            </div>
+
+            {% if d.reason %}
+            <div class="dl-reason">
+                <i class="ti ti-message-circle"></i>{{ d.reason }}
+            </div>
+            {% endif %}
+
+            <form method="post" action="{% url 'projects:delegation_end' d.pk %}" class="mb-0 mt-3">
+                {% csrf_token %}
+                <button type="submit" class="dl-end-btn">
+                    <i class="ti ti-player-stop"></i> Mettre fin à la délégation
+                </button>
+            </form>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="dl-empty">
+        <div class="dl-empty-icon">
+            <i class="ti ti-repeat-off"></i>
+        </div>
+        <h3 class="dl-empty-title">Aucune délégation active</h3>
+        <p class="dl-empty-sub">
+            Vous n'avez délégué aucun projet pour le moment. Créez une délégation lorsqu'un
+            responsable est indisponible, pour qu'un collègue prenne temporairement le relais.
+        </p>
+        <a href="{% url 'projects:delegation_create_generic' %}" class="btn-pd btn-pd-primary mt-4">
+            <i class="ti ti-plus"></i> Créer une délégation
+        </a>
+
+        <div class="dl-empty-hints">
+            <div class="dl-empty-hint">
+                <span class="dl-empty-hint-icon"><i class="ti ti-calendar-time"></i></span>
+                <span>Définissez une date de fin, ou laissez-la ouverte</span>
+            </div>
+            <div class="dl-empty-hint">
+                <span class="dl-empty-hint-icon"><i class="ti ti-user-check"></i></span>
+                <span>Le projet reste visible dans le tableau de bord du remplaçant</span>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+    .dl-wrapper { max-width: 1400px; margin: 0 auto; }
+
+    /* ===== HERO ===== */
+    .dl-hero {
+        position: relative;
+        border-radius: 20px;
+        padding: 2rem 2.25rem;
+        margin-bottom: 1.5rem;
+        background: linear-gradient(135deg, #12182b 0%, #1c2540 55%, #101627 100%);
+        color: #fff;
+        overflow: hidden;
+        box-shadow: 0 12px 32px rgba(15, 23, 42, 0.18);
+    }
+    .dl-hero-orb {
+        position: absolute;
+        top: -120px; right: -80px;
+        width: 320px; height: 320px;
+        border-radius: 50%;
+        background: radial-gradient(circle, #f5b800, transparent 70%);
+        filter: blur(50px);
+        opacity: 0.45;
+        pointer-events: none;
+    }
+    .dl-hero-top {
+        position: relative; z-index: 1;
+        display: flex; justify-content: space-between; align-items: center;
+        flex-wrap: wrap; gap: 1.25rem;
+    }
+    .dl-hero-subtitle { color: #aab2c8; font-size: 0.88rem; margin-bottom: 0.3rem; }
+    .dl-hero-title { font-size: 1.9rem; font-weight: 800; letter-spacing: -0.7px; margin: 0; color: #fff; }
+
+    .btn-pd {
+        display: inline-flex; align-items: center; gap: 0.4rem;
+        padding: 0.6rem 1.1rem; border-radius: 10px;
+        font-size: 0.85rem; font-weight: 600; text-decoration: none;
+        transition: all 0.18s ease; border: none; cursor: pointer;
+    }
+    .btn-pd-primary { background: var(--brand); color: #fff; }
+    .btn-pd-primary:hover { background: #2563eb; color: #fff; transform: translateY(-1px); }
+
+    /* ===== STATS ===== */
+    .dl-stats-strip {
+        display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    .dl-stat {
+        background: var(--bg-surface); border: 1px solid var(--card-border);
+        border-radius: 14px; padding: 1rem 1.1rem;
+        display: flex; align-items: center; gap: 0.85rem;
+        box-shadow: 0 1px 6px rgba(0,0,0,0.05);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    [data-bs-theme="dark"] .dl-stat { box-shadow: none; }
+    .dl-stat:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0,0,0,0.08); }
+    .dl-stat-icon {
+        width: 42px; height: 42px; min-width: 42px; border-radius: 12px;
+        display: flex; align-items: center; justify-content: center; font-size: 1.15rem;
+    }
+    .dl-stat-icon-blue   { background: rgba(59, 130, 246, 0.14); color: #3b82f6; }
+    .dl-stat-icon-orange { background: rgba(232, 89, 12, 0.14); color: #e8590c; }
+    .dl-stat-icon-green  { background: rgba(47, 158, 68, 0.14); color: #2f9e44; }
+    .dl-stat-value { font-size: 1.25rem; font-weight: 800; color: var(--ink); line-height: 1.2; }
+    .dl-stat-label { font-size: 0.72rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.3px; font-weight: 600; }
+
+    /* ===== GRID CARDS ===== */
+    .dl-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+        gap: 1.1rem;
+    }
+
+    .dl-card {
+        background: var(--bg-surface); border: 1px solid var(--card-border);
+        border-left: 3px solid #f5b800;
+        border-radius: 16px;
+        padding: 1.35rem;
+        box-shadow: 0 1px 6px rgba(0,0,0,0.05);
+        transition: box-shadow 0.2s ease, transform 0.2s ease;
+    }
+    [data-bs-theme="dark"] .dl-card { box-shadow: none; }
+    .dl-card:hover {
+        box-shadow: 0 10px 26px rgba(0,0,0,0.09);
+        transform: translateY(-3px);
+    }
+
+    .dl-card-top {
+        display: flex; align-items: center; gap: 0.6rem;
+        margin-bottom: 1rem; flex-wrap: wrap;
+    }
+    .dl-project-name {
+        font-size: 0.96rem; font-weight: 700; color: var(--ink);
+        text-decoration: none; flex: 1; min-width: 0;
+    }
+    .dl-project-name:hover { color: var(--brand); }
+
+    .dl-end-badge {
+        display: inline-flex; align-items: center; gap: 0.3rem;
+        font-size: 0.68rem; font-weight: 700;
+        color: #e8590c; background: rgba(232, 89, 12, 0.14);
+        padding: 0.25rem 0.6rem; border-radius: 50px; white-space: nowrap;
+        text-transform: uppercase; letter-spacing: 0.3px;
+    }
+    .dl-end-badge-open { color: #3b82f6; background: rgba(59, 130, 246, 0.14); }
+
+    .dl-transfer {
+        display: flex; align-items: center; gap: 0.6rem;
+        background: var(--alert-bg); border-radius: 12px; padding: 0.8rem;
+    }
+    .dl-transfer-person { display: flex; align-items: center; gap: 0.6rem; flex: 1; min-width: 0; }
+    .dl-transfer-arrow {
+        width: 26px; height: 26px; border-radius: 50%;
+        background: var(--bg-surface); box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+        display: flex; align-items: center; justify-content: center;
+        color: var(--muted); font-size: 0.9rem; flex-shrink: 0;
+    }
+
+    .avatar-ring {
+        width: 36px; height: 36px; min-width: 36px; border-radius: 10px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 0.88rem; font-weight: 700; border: 2px solid;
+    }
+    .avatar-ring-blue  { background: rgba(59, 130, 246, 0.14); color: #3b82f6; border-color: rgba(59, 130, 246, 0.35); }
+    .avatar-ring-green { background: rgba(47, 158, 68, 0.14); color: #2f9e44; border-color: rgba(47, 158, 68, 0.35); }
+
+    .person-role { font-size: 0.64rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.3px; font-weight: 700; }
+    .person-name {
+        font-size: 0.83rem; font-weight: 600; color: var(--ink);
+        overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+
+    .dl-reason {
+        margin-top: 0.85rem; padding-top: 0.75rem;
+        border-top: 1px dashed var(--card-border);
+        font-size: 0.8rem; color: var(--muted); font-style: italic;
+        display: flex; align-items: flex-start; gap: 0.4rem;
+    }
+    .dl-reason i { margin-top: 0.15rem; color: var(--muted); }
+
+    .dl-end-btn {
+        width: 100%;
+        display: flex; align-items: center; justify-content: center; gap: 0.4rem;
+        padding: 0.55rem; border-radius: 10px;
+        background: var(--bg-surface); border: 1.5px solid rgba(245, 184, 0, 0.5);
+        color: #b3670a; font-weight: 600; font-size: 0.82rem;
+        transition: all 0.18s ease; cursor: pointer;
+    }
+    [data-bs-theme="dark"] .dl-end-btn { color: #f5b800; }
+    .dl-end-btn:hover { background: rgba(245, 184, 0, 0.12); }
+
+    .rag-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .rag-dot-red { background: #e03131; }
+    .rag-dot-orange { background: #f08c00; }
+    .rag-dot-green { background: #2f9e44; }
+    .rag-dot-none { background: #8891a0; opacity: 0.4; }
+
+    /* ===== EMPTY STATE ===== */
+    .dl-empty {
+        text-align: center;
+        padding: 3.5rem 2rem 3rem;
+        background: var(--bg-surface);
+        border: 1px solid var(--card-border);
+        border-radius: 16px;
+        box-shadow: 0 1px 6px rgba(0,0,0,0.05);
+        max-width: 620px;
+        margin: 0 auto;
+    }
+    [data-bs-theme="dark"] .dl-empty { box-shadow: none; }
+
+    .dl-empty-icon {
+        width: 72px; height: 72px;
+        margin: 0 auto 1.5rem;
+        border-radius: 20px;
+        background: linear-gradient(135deg, rgba(245, 184, 0, 0.14), rgba(232, 89, 12, 0.1));
+        border: 1px solid rgba(245, 184, 0, 0.25);
+        display: flex; align-items: center; justify-content: center;
+    }
+    .dl-empty-icon i { font-size: 2.1rem; color: #d9930a; }
+
+    .dl-empty-title {
+        font-size: 1.15rem; font-weight: 700; color: var(--ink);
+        margin-bottom: 0.5rem;
+    }
+    .dl-empty-sub {
+        color: var(--muted); font-size: 0.9rem; line-height: 1.6;
+        max-width: 420px; margin: 0 auto;
+    }
+
+    .dl-empty-hints {
+        display: flex; flex-direction: column; gap: 0.6rem;
+        margin-top: 2rem; padding-top: 1.75rem;
+        border-top: 1px solid var(--card-border);
+        text-align: left; max-width: 400px; margin-left: auto; margin-right: auto;
+    }
+    .dl-empty-hint {
+        display: flex; align-items: center; gap: 0.75rem;
+        font-size: 0.82rem; color: var(--muted);
+    }
+    .dl-empty-hint-icon {
+        width: 30px; height: 30px; min-width: 30px; border-radius: 8px;
+        background: var(--alert-bg);
+        display: flex; align-items: center; justify-content: center;
+        color: var(--brand); font-size: 0.9rem;
+    }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 768px) {
+        .dl-stats-strip { grid-template-columns: 1fr; }
+        .dl-hero-title { font-size: 1.5rem; }
+        .dl-empty { padding: 2.5rem 1.5rem; }
+    }
+</style>
+{% endblock %}

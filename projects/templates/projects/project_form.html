@@ -1,0 +1,267 @@
+{% extends 'base.html' %}
+
+{% block title %}Nouveau Projet — PMS{% endblock %}
+{% block page_title %}Nouveau Projet{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+
+        {% if form.errors %}
+            <div class="alert alert-danger d-flex align-items-center">
+                <i class="ti ti-alert-circle me-2 fs-3"></i>
+                <div>
+                    <strong>Merci de corriger les erreurs ci-dessous.</strong>
+                </div>
+            </div>
+        {% endif %}
+
+        <form method="POST" novalidate>
+            {% csrf_token %}
+
+            <!-- Section : Informations générales -->
+            <div class="card mb-3">
+                <div class="card-header bg-blue-lt border-0">
+                    <h3 class="card-title mb-0">
+                        <i class="ti ti-file-description me-2 text-blue"></i>
+                        Informations générales
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">
+                                {{ form.name.label }} <span class="text-danger">*</span>
+                            </label>
+                            {{ form.name }}
+                            {% if form.name.help_text %}
+                                <small class="form-hint">{{ form.name.help_text }}</small>
+                            {% endif %}
+                            {% if form.name.errors %}
+                                <div class="text-danger small mt-1">
+                                    <i class="ti ti-x-circle me-1"></i>{{ form.name.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">{{ form.account_name.label }}</label>
+                            {{ form.account_name }}
+                            {% if form.account_name.help_text %}
+                                <small class="form-hint">{{ form.account_name.help_text }}</small>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label class="form-label">{{ form.project_class.label }}</label>
+                            {{ form.project_class }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">{{ form.project_type.label }}</label>
+                            {{ form.project_type }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section : Responsables -->
+            <div class="card mb-3">
+                <div class="card-header bg-orange-lt border-0">
+                    <h3 class="card-title mb-0">
+                        <i class="ti ti-users me-2 text-orange"></i>
+                        Responsables
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label class="form-label">
+                                {{ form.owner.label }} <span class="text-danger">*</span>
+                            </label>
+                            {{ form.owner }}
+                            {% if form.owner.errors %}
+                                <div class="text-danger small mt-1">
+                                    <i class="ti ti-x-circle me-1"></i>{{ form.owner.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">
+                                {{ form.manager.label }} <span class="text-danger">*</span>
+                            </label>
+                            {{ form.manager }}
+                            {% if form.manager.errors %}
+                                <div class="text-danger small mt-1">
+                                    <i class="ti ti-x-circle me-1"></i>{{ form.manager.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section : Contenu -->
+            <div class="card mb-3">
+                <div class="card-header bg-purple-lt border-0">
+                    <h3 class="card-title mb-0">
+                        <i class="ti ti-align-left me-2 text-purple"></i>
+                        Contenu
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label">{{ form.description.label }}</label>
+                        {{ form.description }}
+                    </div>
+                    <div class="mb-0">
+                        <label class="form-label">{{ form.targets.label }}</label>
+                        {{ form.targets }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section : Statut et planning -->
+            <div class="card mb-3">
+                <div class="card-header bg-green-lt border-0">
+                    <h3 class="card-title mb-0">
+                        <i class="ti ti-calendar-event me-2 text-green"></i>
+                        Statut et planning
+                    </h3>
+                </div>
+                <div class="card-body">
+
+                    <!-- Statut sous forme d'étiquettes -->
+                    <div class="mb-4">
+                        <label class="form-label d-block">{{ form.status.label }}</label>
+                        <div class="status-badge-group">
+                            {% for radio in form.status %}
+                                <input type="radio"
+                                       name="{{ radio.data.name }}"
+                                       id="{{ radio.id_for_label }}"
+                                       value="{{ radio.data.value }}"
+                                       class="status-badge-input"
+                                       {% if radio.data.selected %}checked{% endif %}>
+                                <label for="{{ radio.id_for_label }}"
+                                       class="status-badge status-badge-{{ radio.data.value|lower }}">
+                                    {{ radio.choice_label }}
+                                </label>
+                            {% endfor %}
+                        </div>
+                        {% if form.status.errors %}
+                            <div class="text-danger small mt-1">{{ form.status.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label class="form-label">
+                                {{ form.start_date.label }} <span class="text-danger">*</span>
+                            </label>
+                            {{ form.start_date }}
+                            {% if form.start_date.errors %}
+                                <div class="text-danger small mt-1">{{ form.start_date.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">{{ form.end_date.label }}</label>
+                            {{ form.end_date }}
+                            {% if form.end_date.errors %}
+                                <div class="text-danger small mt-1">{{ form.end_date.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <a href="{% url 'projects:project_list' %}" class="btn btn-outline-secondary">
+                    <i class="ti ti-arrow-left me-1"></i> Annuler
+                </a>
+                <button type="submit" class="btn btn-primary px-4">
+                    <i class="ti ti-check me-1"></i>
+                    Créer le projet
+                </button>
+            </div>
+
+        </form>
+    </div>
+</div>
+
+<style>
+    .status-badge-group {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .status-badge-input {
+        position: absolute;
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+
+    .status-badge {
+        cursor: pointer;
+        padding: 0.4rem 0.9rem;
+        border-radius: 50px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+        border: 2px solid transparent;
+        background: #f1f3f5;
+        color: #6c757d;
+        transition: all 0.15s ease;
+        user-select: none;
+    }
+
+    .status-badge:hover {
+        opacity: 0.85;
+    }
+
+    .status-badge-input:checked + .status-badge {
+        color: #fff;
+        border-color: transparent;
+    }
+
+    /* Couleurs par statut — adapte les slugs à tes vraies valeurs */
+    .status-badge-planifié.status-badge,
+    .status-badge-planned.status-badge {
+        background: #e7f5ff; color: #1971c2;
+    }
+    .status-badge-input:checked + .status-badge-planifié,
+    .status-badge-input:checked + .status-badge-planned {
+        background: #1971c2;
+    }
+
+    .status-badge-en_cours.status-badge,
+    .status-badge-in_progress.status-badge {
+        background: #fff4e6; color: #e8590c;
+    }
+    .status-badge-input:checked + .status-badge-en_cours,
+    .status-badge-input:checked + .status-badge-in_progress {
+        background: #e8590c;
+    }
+
+    .status-badge-terminé.status-badge,
+    .status-badge-completed.status-badge {
+        background: #ebfbee; color: #2f9e44;
+    }
+    .status-badge-input:checked + .status-badge-terminé,
+    .status-badge-input:checked + .status-badge-completed {
+        background: #2f9e44;
+    }
+
+    .status-badge-annulé.status-badge,
+    .status-badge-cancelled.status-badge {
+        background: #fff5f5; color: #e03131;
+    }
+    .status-badge-input:checked + .status-badge-annulé,
+    .status-badge-input:checked + .status-badge-cancelled {
+        background: #e03131;
+    }
+</style>
+{% endblock %}

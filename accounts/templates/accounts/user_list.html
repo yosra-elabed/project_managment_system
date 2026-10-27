@@ -1,0 +1,301 @@
+{% extends 'base.html' %}
+{% block title %}Utilisateurs — PMS{% endblock %}
+{% block page_title %}Utilisateurs{% endblock %}
+
+{% block content %}
+{% if messages %}
+    <div class="ul-messages">
+        {% for message in messages %}
+            <div class="ul-alert">
+                <i class="ti ti-circle-check"></i>{{ message }}
+            </div>
+        {% endfor %}
+    </div>
+{% endif %}
+
+<div class="ul-wrapper">
+
+    <!-- ===== HERO HEADER ===== -->
+    <div class="ul-hero">
+        <div class="ul-hero-orb"></div>
+        <div class="ul-hero-top">
+            <div>
+                <p class="ul-hero-subtitle">Gestion des accès</p>
+                <h1 class="ul-hero-title">Utilisateurs</h1>
+            </div>
+            <a href="{% url 'accounts:user_create' %}" class="btn-pd btn-pd-primary">
+                <i class="ti ti-user-plus"></i> Nouvel utilisateur
+            </a>
+        </div>
+    </div>
+
+    <!-- ===== STATS STRIP ===== -->
+    <div class="ul-stats-strip">
+        <div class="ul-stat">
+            <span class="ul-stat-icon ul-stat-icon-slate"><i class="ti ti-users"></i></span>
+            <div>
+                <div class="ul-stat-value">{{ users|length }}</div>
+                <div class="ul-stat-label">Utilisateurs</div>
+            </div>
+        </div>
+        <div class="ul-stat">
+            <span class="ul-stat-icon ul-stat-icon-red"><i class="ti ti-shield"></i></span>
+            <div>
+                <div class="ul-stat-value">{{ admin_count|default:"0" }}</div>
+                <div class="ul-stat-label">Admins</div>
+            </div>
+        </div>
+        <div class="ul-stat">
+            <span class="ul-stat-icon ul-stat-icon-orange"><i class="ti ti-briefcase"></i></span>
+            <div>
+                <div class="ul-stat-value">{{ pm_count|default:"0" }}</div>
+                <div class="ul-stat-label">Project Managers</div>
+            </div>
+        </div>
+        <div class="ul-stat">
+            <span class="ul-stat-icon ul-stat-icon-green"><i class="ti ti-user-check"></i></span>
+            <div>
+                <div class="ul-stat-value">{{ active_count|default:"0" }}</div>
+                <div class="ul-stat-label">Actifs</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== TABLE ===== -->
+    <div class="ul-card">
+        <div class="ul-table-wrap">
+            <table class="ul-table">
+                <thead>
+                    <tr>
+                        <th>Utilisateur</th>
+                        <th>Email</th>
+                        <th>Rôle</th>
+                        <th>Statut</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for u in users %}
+                    <tr>
+                        <td>
+                            <div class="ul-user">
+                                <span class="ul-avatar">{{ u.username|slice:":1"|upper }}</span>
+                                <span class="ul-username">{{ u.username }}</span>
+                            </div>
+                        </td>
+                        <td class="ul-muted">{{ u.email|default:"—" }}</td>
+                        <td>
+                            <span class="role-badge role-badge-{{ u.role|lower }}">
+                                {{ u.get_role_display }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if u.is_active %}
+                                <span class="active-badge active-badge-on"><i class="ti ti-point-filled"></i>Actif</span>
+                            {% else %}
+                                <span class="active-badge active-badge-off"><i class="ti ti-point-filled"></i>Inactif</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end">
+                            <div class="ul-actions">
+                                <a href="{% url 'accounts:user_update' u.pk %}" class="ul-btn-icon ul-btn-icon-primary" title="Modifier">
+                                    <i class="ti ti-edit"></i>
+                                </a>
+                                <a href="{% url 'accounts:user_delete' u.pk %}" class="ul-btn-icon ul-btn-icon-danger" title="Supprimer">
+                                    <i class="ti ti-trash"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="ul-empty-row">
+                            <i class="ti ti-users"></i>
+                            <p class="mb-0">Aucun utilisateur pour le moment.</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<style>
+    .ul-wrapper { max-width: 1400px; margin: 0 auto; }
+
+    /* ===== MESSAGES ===== */
+    .ul-messages { margin-bottom: 1rem; }
+    .ul-alert {
+        display: flex; align-items: center; gap: 0.5rem;
+        background: #ebfbee; color: #2f9e44;
+        border-radius: 10px; padding: 0.75rem 1rem;
+        font-size: 0.88rem; font-weight: 500;
+    }
+    [data-bs-theme="dark"] .ul-alert { background: rgba(47,158,68,0.16); color: #79d190; }
+
+    /* ===== HERO ===== */
+    .ul-hero {
+        position: relative;
+        border-radius: 20px;
+        padding: 2rem 2.25rem;
+        margin-bottom: 1.5rem;
+        background: linear-gradient(135deg, #12182b 0%, #1c2540 55%, #101627 100%);
+        color: #fff;
+        overflow: hidden;
+        box-shadow: 0 12px 32px rgba(15, 23, 42, 0.18);
+    }
+    .ul-hero-orb {
+        position: absolute;
+        top: -120px; right: -80px;
+        width: 320px; height: 320px;
+        border-radius: 50%;
+        background: radial-gradient(circle, #9c36b5, transparent 70%);
+        filter: blur(50px);
+        opacity: 0.45;
+        pointer-events: none;
+    }
+    .ul-hero-top {
+        position: relative; z-index: 1;
+        display: flex; justify-content: space-between; align-items: center;
+        flex-wrap: wrap; gap: 1.25rem;
+    }
+    .ul-hero-subtitle { color: #aab2c8; font-size: 0.88rem; margin-bottom: 0.3rem; }
+    .ul-hero-title { font-size: 1.9rem; font-weight: 800; letter-spacing: -0.7px; margin: 0; color: #fff; }
+
+    .btn-pd {
+        display: inline-flex; align-items: center; gap: 0.4rem;
+        padding: 0.6rem 1.1rem; border-radius: 10px;
+        font-size: 0.85rem; font-weight: 600; text-decoration: none;
+        transition: all 0.18s ease; border: none; cursor: pointer;
+    }
+    .btn-pd-primary { background: #4692ec; color: #fff; }
+    .btn-pd-primary:hover { background: #2f7be0; color: #fff; transform: translateY(-1px); }
+
+    /* ===== STATS ===== */
+    .ul-stats-strip {
+        display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    .ul-stat {
+        background: var(--bg-surface);
+        border-radius: 14px; padding: 1rem 1.1rem;
+        display: flex; align-items: center; gap: 0.85rem;
+        box-shadow: 0 1px 6px rgba(0,0,0,0.05);
+        transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+    }
+    .ul-stat:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0,0,0,0.08); }
+    .ul-stat-icon {
+        width: 42px; height: 42px; min-width: 42px; border-radius: 12px;
+        display: flex; align-items: center; justify-content: center; font-size: 1.15rem;
+    }
+    .ul-stat-icon-slate  { background: #eef1f5; color: #495057; }
+    .ul-stat-icon-red    { background: #fff5f5; color: #e03131; }
+    .ul-stat-icon-orange { background: #fff4e6; color: #e8590c; }
+    .ul-stat-icon-green  { background: #ebfbee; color: #2f9e44; }
+    [data-bs-theme="dark"] .ul-stat-icon-slate  { background: rgba(148,158,190,0.15); color: #b9c3dc; }
+    [data-bs-theme="dark"] .ul-stat-icon-red    { background: rgba(224,49,49,0.18); color: #ff8787; }
+    [data-bs-theme="dark"] .ul-stat-icon-orange { background: rgba(232,89,12,0.18); color: #f5a35e; }
+    [data-bs-theme="dark"] .ul-stat-icon-green  { background: rgba(47,158,68,0.18); color: #79d190; }
+
+    .ul-stat-value { font-size: 1.25rem; font-weight: 800; color: var(--ink); line-height: 1.2; }
+    .ul-stat-label { font-size: 0.72rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.3px; font-weight: 600; }
+
+    /* ===== TABLE CARD ===== */
+    .ul-card {
+        background: var(--bg-surface);
+        border-radius: 16px;
+        box-shadow: 0 1px 6px rgba(0,0,0,0.05);
+        overflow: hidden;
+        transition: background-color 0.2s ease;
+    }
+    .ul-table-wrap { overflow-x: auto; }
+    .ul-table { width: 100%; border-collapse: collapse; }
+
+    .ul-table thead th {
+        text-align: left;
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+        color: var(--muted);
+        padding: 1rem 1.25rem;
+        border-bottom: 1px solid var(--border);
+        white-space: nowrap;
+    }
+    .ul-table tbody td {
+        padding: 0.9rem 1.25rem;
+        border-bottom: 1px solid var(--border);
+        font-size: 0.88rem;
+        color: var(--ink);
+        vertical-align: middle;
+    }
+    .ul-table tbody tr:last-child td { border-bottom: none; }
+    .ul-table tbody tr { transition: background-color 0.15s ease; }
+    .ul-table tbody tr:hover { background: var(--bg-body); }
+
+    .ul-user { display: flex; align-items: center; gap: 0.65rem; }
+    .ul-avatar {
+        width: 32px; height: 32px; min-width: 32px; border-radius: 10px;
+        background: linear-gradient(135deg, #4692ec, #1d4ed8);
+        color: #fff;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 0.82rem; font-weight: 700;
+        box-shadow: 0 2px 6px rgba(70,146,236,0.3);
+    }
+    .ul-username { font-weight: 600; color: var(--ink); }
+    .ul-muted { color: var(--muted); }
+
+    /* Role badges */
+    .role-badge {
+        display: inline-flex; align-items: center;
+        padding: 0.3rem 0.85rem; border-radius: 50px;
+        font-size: 0.7rem; font-weight: 700;
+        text-transform: uppercase; letter-spacing: 0.3px;
+        white-space: nowrap;
+    }
+    .role-badge-admin { background: #fff5f5; color: #e03131; }
+    .role-badge-pm    { background: #fff4e6; color: #e8590c; }
+    .role-badge-user  { background: #e7f5ff; color: #1971c2; }
+    [data-bs-theme="dark"] .role-badge-admin { background: rgba(224,49,49,0.18); color: #ff8787; }
+    [data-bs-theme="dark"] .role-badge-pm    { background: rgba(232,89,12,0.18); color: #f5a35e; }
+    [data-bs-theme="dark"] .role-badge-user  { background: rgba(25,113,194,0.2); color: #74b3f0; }
+
+    /* Active badges */
+    .active-badge {
+        display: inline-flex; align-items: center; gap: 0.2rem;
+        font-size: 0.78rem; font-weight: 600;
+    }
+    .active-badge i { font-size: 0.7rem; }
+    .active-badge-on  { color: #2f9e44; }
+    .active-badge-off { color: #adb5bd; }
+    [data-bs-theme="dark"] .active-badge-on  { color: #79d190; }
+    [data-bs-theme="dark"] .active-badge-off { color: #6b7794; }
+
+    .ul-actions { display: flex; justify-content: flex-end; gap: 0.4rem; }
+    .ul-btn-icon {
+        width: 32px; height: 32px; border-radius: 8px;
+        display: inline-flex; align-items: center; justify-content: center;
+        font-size: 0.9rem; text-decoration: none;
+        border: 1.5px solid var(--border);
+        transition: all 0.15s ease;
+    }
+    .ul-btn-icon-primary { color: #4692ec; }
+    .ul-btn-icon-primary:hover { background: #4692ec; color: #fff; border-color: #4692ec; }
+    .ul-btn-icon-danger { color: #e03131; }
+    .ul-btn-icon-danger:hover { background: #e03131; color: #fff; border-color: #e03131; }
+
+    .ul-empty-row { text-align: center; padding: 3rem 1rem !important; }
+    .ul-empty-row i { font-size: 2.5rem; color: var(--border); display: block; margin-bottom: 0.75rem; }
+    .ul-empty-row p { color: var(--muted); }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 992px) {
+        .ul-stats-strip { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 576px) {
+        .ul-stats-strip { grid-template-columns: 1fr; }
+        .ul-hero-title { font-size: 1.5rem; }
+    }
+</style>
+{% endblock %}

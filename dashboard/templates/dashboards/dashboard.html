@@ -1,0 +1,225 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard — PMS{% endblock %}
+
+{% block content %}
+<div class="container-xl">
+
+    <!-- Header de bienvenue -->
+    <div class="row mb-4 mt-3">
+        <div class="col-12">
+            <div class="card bg-primary-lt border-0">
+                <div class="card-body d-flex align-items-center justify-content-between flex-wrap gap-3">
+                    <div>
+                        <div class="text-muted mb-1">{% now "l d F Y" %}</div>
+                        <h2 class="mb-0">Bienvenue, {{ user.username }} 👋</h2>
+                    </div>
+                    <div class="d-none d-md-block">
+                        <span class="badge bg-primary text-white p-2">
+                            <i class="ti ti-layout-dashboard me-1"></i> Tableau de bord
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cartes statistiques -->
+    <div class="row row-deck row-cards">
+
+        <!-- Total utilisateurs -->
+        <div class="col-sm-6 col-lg-3">
+            <div class="card card-sm shadow-sm border-0 hover-lift h-100">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-auto">
+                            <span class="avatar avatar-md rounded-circle bg-blue-lt">
+                                <i class="ti ti-users text-blue fs-2"></i>
+                            </span>
+                        </div>
+                        <div class="col">
+                            <div class="fs-2 fw-bold">{{ total_users }}</div>
+                            <div class="text-muted small text-uppercase">Utilisateurs</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="progress progress-sm" style="height:3px;">
+                    <div class="progress-bar bg-blue" style="width: 100%"></div>
+                </div>
+            </div>
+        </div>
+        <div class="row g-3 mb-4">
+    <!-- Statut des projets -->
+    <div class="col-lg-6">
+        <div class="content-card">
+            <div class="content-card-header">
+                <h3 class="mb-0">Statut des projets</h3>
+                <span class="text-muted small">{{ total_projects }} au total</span>
+            </div>
+            <div class="content-card-body">
+                <div class="segmented-bar mb-3">
+                    <div class="segment bg-green" style="width: {{ project_pct.completed }}%" title="Terminé {{ project_pct.completed }}%"></div>
+                    <div class="segment bg-blue" style="width: {{ project_pct.in_progress }}%" title="En cours {{ project_pct.in_progress }}%"></div>
+                    <div class="segment bg-yellow" style="width: {{ project_pct.on_hold }}%" title="En attente {{ project_pct.on_hold }}%"></div>
+                    <div class="segment bg-slate" style="width: {{ project_pct.not_started }}%" title="Non commencé {{ project_pct.not_started }}%"></div>
+                    <div class="segment bg-red" style="width: {{ project_pct.cancelled }}%" title="Annulé {{ project_pct.cancelled }}%"></div>
+                </div>
+                <div class="legend-grid">
+                    <div class="legend-item"><span class="legend-dot bg-green"></span>Terminé <b>{{ project_pct.completed }}%</b> <span class="text-muted">({{ project_stats.completed }})</span></div>
+                    <div class="legend-item"><span class="legend-dot bg-blue"></span>En cours <b>{{ project_pct.in_progress }}%</b> <span class="text-muted">({{ project_stats.in_progress }})</span></div>
+                    <div class="legend-item"><span class="legend-dot bg-yellow"></span>En attente <b>{{ project_pct.on_hold }}%</b> <span class="text-muted">({{ project_stats.on_hold }})</span></div>
+                    <div class="legend-item"><span class="legend-dot bg-slate"></span>Non commencé <b>{{ project_pct.not_started }}%</b> <span class="text-muted">({{ project_stats.not_started }})</span></div>
+                    <div class="legend-item"><span class="legend-dot bg-red"></span>Annulé <b>{{ project_pct.cancelled }}%</b> <span class="text-muted">({{ project_stats.cancelled }})</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Répartition RAG -->
+    <div class="col-lg-6">
+        <div class="content-card">
+            <div class="content-card-header">
+                <h3 class="mb-0">Répartition des statuses </h3>
+            </div>
+            <div class="content-card-body">
+                <div class="segmented-bar mb-3">
+                    <div class="segment bg-red" style="width: {{ rag_pct.RED }}%" title="Rouge {{ rag_pct.RED }}%"></div>
+                    <div class="segment bg-orange" style="width: {{ rag_pct.ORANGE }}%" title="Orange {{ rag_pct.ORANGE }}%"></div>
+                    <div class="segment bg-green" style="width: {{ rag_pct.GREEN }}%" title="Vert {{ rag_pct.GREEN }}%"></div>
+                    <div class="segment bg-slate" style="width: {{ rag_pct.NONE }}%" title="Non défini {{ rag_pct.NONE }}%"></div>
+                </div>
+                <div class="legend-grid">
+                    <div class="legend-item"><span class="legend-dot bg-red"></span>Rouge <b>{{ rag_pct.RED }}%</b> <span class="text-muted">({{ rag_counts.RED }})</span></div>
+                    <div class="legend-item"><span class="legend-dot bg-orange"></span>Orange <b>{{ rag_pct.ORANGE }}%</b> <span class="text-muted">({{ rag_counts.ORANGE }})</span></div>
+                    <div class="legend-item"><span class="legend-dot bg-green"></span>Vert <b>{{ rag_pct.GREEN }}%</b> <span class="text-muted">({{ rag_counts.GREEN }})</span></div>
+                    <div class="legend-item"><span class="legend-dot bg-slate"></span>Non défini <b>{{ rag_pct.NONE }}%</b> <span class="text-muted">({{ rag_counts.NONE }})</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tâches en retard -->
+    <div class="col-12">
+        <div class="content-card">
+            <div class="content-card-header">
+                <h3 class="mb-0">Tâches en retard</h3>
+                <span class="badge-overdue">{{ overdue_count }}</span>
+            </div>
+            <div class="content-card-body">
+                {% for task in overdue_tasks %}
+                <div class="task-line">
+                    <div class="task-line-title">{{ task.title }}</div>
+                    <div class="task-line-meta">{{ task.project.name }} · {{ task.assigned_to.username }} · échéance {{ task.due_date|date:"d/m/Y" }}</div>
+                </div>
+                {% empty %}
+                <p class="text-muted mb-0">Aucune tâche en retard 🎉</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+        <!-- Admins -->
+        <div class="col-sm-6 col-lg-3">
+            <div class="card card-sm shadow-sm border-0 hover-lift h-100">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-auto">
+                            <span class="avatar avatar-md rounded-circle bg-red-lt">
+                                <i class="ti ti-shield-check text-red fs-2"></i>
+                            </span>
+                        </div>
+                        <div class="col">
+                            <div class="fs-2 fw-bold">{{ total_admins }}</div>
+                            <div class="text-muted small text-uppercase">Admins</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="progress progress-sm" style="height:3px;">
+                    <div class="progress-bar bg-red" style="width: 100%"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Project Managers -->
+        <div class="col-sm-6 col-lg-3">
+            <div class="card card-sm shadow-sm border-0 hover-lift h-100">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-auto">
+                            <span class="avatar avatar-md rounded-circle bg-orange-lt">
+                                <i class="ti ti-briefcase text-orange fs-2"></i>
+                            </span>
+                        </div>
+                        <div class="col">
+                            <div class="fs-2 fw-bold">{{ total_pms }}</div>
+                            <div class="text-muted small text-uppercase">Project Managers</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="progress progress-sm" style="height:3px;">
+                    <div class="progress-bar bg-orange" style="width: 100%"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Utilisateurs simples -->
+        <div class="col-sm-6 col-lg-3">
+            <div class="card card-sm shadow-sm border-0 hover-lift h-100">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-auto">
+                            <span class="avatar avatar-md rounded-circle bg-green-lt">
+                                <i class="ti ti-user text-green fs-2"></i>
+                            </span>
+                        </div>
+                        <div class="col">
+                            <div class="fs-2 fw-bold">{{ total_regular_users }}</div>
+                            <div class="text-muted small text-uppercase">Utilisateurs standards</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="progress progress-sm" style="height:3px;">
+                    <div class="progress-bar bg-green" style="width: 100%"></div>
+                </div>
+            </div>
+        </div>
+
+       
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<style>
+    .hover-lift {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .hover-lift:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.08) !important;
+    }
+    .segmented-bar {
+    display: flex; width: 100%; height: 10px;
+    border-radius: 20px; overflow: hidden; background: #f1f3f5;
+}
+.segmented-bar .segment { height: 100%; min-width: 2px; }
+.bg-green  { background: #2f9e44 !important; }
+.bg-blue   { background: #1971c2 !important; }
+.bg-yellow { background: #f5b800 !important; }
+.bg-slate  { background: #adb5bd !important; }
+.bg-red    { background: #e03131 !important; }
+.bg-orange { background: #e8590c !important; }
+
+.legend-grid { display: flex; flex-direction: column; gap: 0.5rem; }
+.legend-item { font-size: 0.83rem; color: #4b5563; display: flex; align-items: center; gap: 0.5rem; }
+.legend-item b { color: #1e2129; }
+.legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+.badge-overdue {
+    background: #fff5f5; color: #e03131; font-weight: 700;
+    font-size: 0.78rem; padding: 0.2rem 0.65rem; border-radius: 20px;
+}
+</style>
+{% endblock %}

@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% block title %}Supprimer — PMS{% endblock %}
+{% block page_title %}Supprimer un utilisateur{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-body">
+        <p>Es-tu sûr(e) de vouloir supprimer <strong>{{ user_obj.username }}</strong> ? Cette action est irréversible.</p>
+        <form method="POST">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger">Supprimer définitivement</button>
+            <a href="{% url 'accounts:user_list' %}" class="btn btn-link">Annuler</a>
+        </form>
+    </div>
+</div>
+{% endblock %}
